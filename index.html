@@ -1,662 +1,638 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Yomamadoodle - Daily Clip & Rarity Game</title>
-    <style>
-      :root {
-        --bg-dark: #09090b;
-        --card-bg: rgba(255, 255, 255, 0.03);
-        --card-border: rgba(255, 255, 255, 0.08);
-        --text-primary: #f4f4f5;
-        --text-secondary: #a1a1aa;
-        --accent-gradient: linear-gradient(135deg, #a855f7, #3b82f6);
-        --ep-gradient: linear-gradient(135deg, #fbbf24, #f59e0b);
-      }
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Yomamadoodle - Daily Clip & Rarity Game</title>
+<style>
+  :root {
+    --bg-dark: #09090b;
+    --card-bg: rgba(255, 255, 255, 0.03);
+    --card-border: rgba(255, 255, 255, 0.08);
+    --text-primary: #f4f4f5;
+    --text-secondary: #a1a1aa;
+    --accent-gradient: linear-gradient(135deg, #a855f7, #3b82f6);
+    --ep-gradient: linear-gradient(135deg, #fbbf24, #f59e0b);
+  }
 
-      * {
-        box-sizing: border-box;
-        margin: 0;
-        padding: 0;
-      }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
 
-      body {
-        background: var(--bg-dark);
-        background-image: radial-gradient(
-          circle at 50% 0%,
-          rgba(168, 85, 247, 0.15) 0%,
-          transparent 50%
-        );
-        color: var(--text-primary);
-        font-family:
-          "Inter",
-          system-ui,
-          -apple-system,
-          sans-serif;
-        min-height: 100vh;
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        padding: 20px;
-      }
+  body {
+    background: var(--bg-dark);
+    background-image: radial-gradient(circle at 50% 0%, rgba(168, 85, 247, 0.15) 0%, transparent 50%);
+    color: var(--text-primary);
+    font-family: 'Inter', system-ui, -apple-system, sans-serif;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 20px;
+  }
 
-      .container {
-        max-width: 600px;
-        width: 100%;
-        animation: fadeIn 0.8s ease-out forwards;
-      }
+  .container {
+    max-width: 600px;
+    width: 100%;
+    animation: fadeIn 0.8s ease-out forwards;
+  }
 
-      @keyframes fadeIn {
-        from {
-          opacity: 0;
-          transform: translateY(20px);
-        }
-        to {
-          opacity: 1;
-          transform: translateY(0);
-        }
-      }
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
 
-      .header {
-        text-align: center;
-        margin-bottom: 30px;
-      }
+  .header {
+    text-align: center;
+    margin-bottom: 24px;
+  }
 
-      .header h1 {
-        font-size: 2.5rem;
-        background: var(--accent-gradient);
-        -webkit-background-clip: text;
-        -webkit-text-fill-color: transparent;
-        margin-bottom: 8px;
-        letter-spacing: -1px;
-      }
+  .header h1 {
+    font-size: 2.5rem;
+    background: var(--accent-gradient);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    margin-bottom: 8px;
+    letter-spacing: -1px;
+  }
 
-      .header p {
-        color: var(--text-secondary);
-        font-size: 0.95rem;
-      }
+  .card {
+    background: var(--card-bg);
+    border: 1px solid var(--card-border);
+    border-radius: 16px;
+    padding: 24px;
+    margin-bottom: 20px;
+    backdrop-filter: blur(12px);
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+  }
 
-      .card {
-        background: var(--card-bg);
-        border: 1px solid var(--card-border);
-        border-radius: 16px;
-        padding: 24px;
-        margin-bottom: 20px;
-        backdrop-filter: blur(12px);
-        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
-      }
+  .video-player {
+    background: #000;
+    border-radius: 12px;
+    overflow: hidden;
+    position: relative;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    margin-bottom: 20px;
+  }
 
-      /* Video Player Mockup */
-      .video-player {
-        background: #000;
-        border-radius: 12px;
-        overflow: hidden;
-        position: relative;
-        border: 1px solid rgba(255, 255, 255, 0.1);
-        margin-bottom: 20px;
-      }
+  .yt-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px;
+    background: rgba(255, 255, 255, 0.05);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  }
 
-      .yt-header {
-        display: flex;
-        align-items: center;
-        gap: 12px;
-        padding: 12px;
-        background: rgba(255, 255, 255, 0.05);
-        border-bottom: 1px solid rgba(255, 255, 255, 0.05);
-      }
+  .yt-avatar {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    overflow: hidden;
+    background: var(--accent-gradient);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
 
-      .yt-avatar {
-        width: 36px;
-        height: 36px;
-        background: var(--accent-gradient);
-        border-radius: 50%;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-weight: 700;
-        font-size: 0.8rem;
-      }
+  .yt-avatar img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
 
-      .yt-info {
-        display: flex;
-        flex-direction: column;
-      }
-      .yt-title {
-        font-weight: 600;
-        font-size: 0.9rem;
-      }
-      .yt-channel {
-        font-size: 0.75rem;
-        color: var(--text-secondary);
-        display: flex;
-        align-items: center;
-        gap: 4px;
-      }
-      .yt-channel::after {
-        content: "✔️";
-        font-size: 0.7rem;
-      }
+  .yt-info { display: flex; flex-direction: column; }
+  .yt-title { font-weight: 600; font-size: 0.9rem; }
+  .yt-channel { font-size: 0.75rem; color: var(--text-secondary); }
 
-      .video-content {
-        aspect-ratio: 16/9;
-        display: flex;
-        flex-direction: column;
-        justify-content: center;
-        align-items: center;
-        padding: 20px;
-        position: relative;
-        background: linear-gradient(135deg, #18181b, #09090b);
-      }
+  .video-content {
+    aspect-ratio: 16/9;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    padding: 20px;
+    position: relative;
+    background: linear-gradient(135deg, #18181b, #09090b);
+  }
 
-      .play-button {
-        width: 64px;
-        height: 64px;
-        background: rgba(255, 255, 255, 0.1);
-        border-radius: 50%;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-size: 24px;
-        cursor: pointer;
-        transition: all 0.3s ease;
-        backdrop-filter: blur(4px);
-        border: 1px solid rgba(255, 255, 255, 0.2);
-        margin-bottom: 16px;
-      }
+  .play-button {
+    width: 64px;
+    height: 64px;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 24px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    backdrop-filter: blur(4px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    margin-bottom: 16px;
+  }
 
-      .play-button:hover {
-        background: rgba(168, 85, 247, 0.3);
-        transform: scale(1.1);
-        box-shadow: 0 0 20px rgba(168, 85, 247, 0.4);
-      }
+  .play-button:hover {
+    background: rgba(168, 85, 247, 0.3);
+    transform: scale(1.1);
+    box-shadow: 0 0 20px rgba(168, 85, 247, 0.4);
+  }
 
-      .joke-text {
-        font-size: 1.15rem;
-        font-weight: 600;
-        text-align: center;
-        line-height: 1.5;
-        color: #fff;
-        text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
-        max-width: 90%;
-      }
+  .joke-text {
+    font-size: 1.15rem;
+    font-weight: 600;
+    text-align: center;
+    line-height: 1.5;
+    color: #fff;
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
+    max-width: 90%;
+  }
 
-      .daily-badge {
-        position: absolute;
-        top: 12px;
-        right: 12px;
-        background: rgba(239, 68, 68, 0.9);
-        color: white;
-        font-size: 0.65rem;
-        font-weight: 700;
-        padding: 4px 8px;
-        border-radius: 4px;
-        text-transform: uppercase;
-        letter-spacing: 0.5px;
-      }
+  .daily-badge {
+    position: absolute;
+    top: 12px;
+    right: 12px;
+    background: rgba(239, 68, 68, 0.9);
+    color: white;
+    font-size: 0.65rem;
+    font-weight: 700;
+    padding: 4px 8px;
+    border-radius: 4px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
 
-      /* Badges */
-      .badge-grid {
-        display: flex;
-        flex-wrap: wrap;
-        gap: 10px;
-        margin: 20px 0;
-      }
+  .badge-grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin: 20px 0;
+  }
 
-      .badge {
-        padding: 6px 12px;
-        border-radius: 20px;
-        font-size: 0.8rem;
-        font-weight: 600;
-        display: flex;
-        align-items: center;
-        gap: 6px;
-        border: 1px solid rgba(255, 255, 255, 0.1);
-        background: rgba(0, 0, 0, 0.3);
-        transition:
-          transform 0.2s,
-          box-shadow 0.2s;
-      }
+  .badge {
+    padding: 6px 12px;
+    border-radius: 20px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    background: rgba(0, 0, 0, 0.3);
+    transition: transform 0.2s, box-shadow 0.2s;
+  }
 
-      .badge:hover {
-        transform: translateY(-2px);
-      }
+  .badge:hover { transform: translateY(-2px); }
+  .rarity-dot { width: 8px; height: 8px; border-radius: 50%; }
 
-      .rarity-dot {
-        width: 8px;
-        height: 8px;
-        border-radius: 50%;
-      }
+  .ep-display {
+    text-align: center;
+    margin: 24px 0;
+    padding: 20px;
+    background: rgba(251, 191, 36, 0.05);
+    border-radius: 12px;
+    border: 1px solid rgba(251, 191, 36, 0.2);
+  }
 
-      /* EP Display */
-      .ep-display {
-        text-align: center;
-        margin: 24px 0;
-        padding: 20px;
-        background: rgba(251, 191, 36, 0.05);
-        border-radius: 12px;
-        border: 1px solid rgba(251, 191, 36, 0.2);
-      }
+  .ep-label { font-size: 0.8rem; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 8px; }
+  .ep-value { font-size: 3rem; font-weight: 800; background: var(--ep-gradient); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+  .ep-rarity { font-size: 0.9rem; font-weight: 600; margin-top: 8px; }
 
-      .ep-label {
-        font-size: 0.8rem;
-        color: var(--text-secondary);
-        text-transform: uppercase;
-        letter-spacing: 1px;
-        margin-bottom: 8px;
-      }
+  /* Poem Builder Styles */
+  .poem-builder {
+    background: rgba(0, 0, 0, 0.3);
+    border-left: 3px solid #a855f7;
+    padding: 20px;
+    border-radius: 0 12px 12px 0;
+    margin: 20px 0;
+  }
 
-      .ep-value {
-        font-size: 3rem;
-        font-weight: 800;
-        background: var(--ep-gradient);
-        -webkit-background-clip: text;
-        -webkit-text-fill-color: transparent;
-      }
+  .poem-builder h3 {
+    font-size: 0.9rem;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-bottom: 16px;
+  }
 
-      .ep-rarity {
-        font-size: 0.9rem;
-        font-weight: 600;
-        margin-top: 8px;
-      }
+  .word-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+    gap: 12px;
+    margin-bottom: 20px;
+  }
 
-      /* Poem */
-      .poem-box {
-        background: rgba(0, 0, 0, 0.3);
-        border-left: 3px solid #a855f7;
-        padding: 20px;
-        border-radius: 0 12px 12px 0;
-        font-style: italic;
-        color: #d4d4d8;
-        line-height: 1.6;
-        margin: 20px 0;
-        font-size: 0.95rem;
-        white-space: pre-line;
-      }
+  .word-select {
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    color: var(--text-primary);
+    padding: 8px 12px;
+    border-radius: 8px;
+    font-size: 0.9rem;
+    font-weight: 600;
+    cursor: pointer;
+    outline: none;
+    transition: border-color 0.2s;
+    appearance: none;
+    background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23a1a1aa' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
+    background-repeat: no-repeat;
+    background-position: right 8px center;
+    background-size: 16px;
+  }
 
-      /* Buttons */
-      .copy-btn {
-        width: 100%;
-        padding: 14px;
-        background: var(--accent-gradient);
-        border: none;
-        border-radius: 10px;
-        color: white;
-        font-weight: 700;
-        font-size: 1rem;
-        cursor: pointer;
-        transition: all 0.3s ease;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        gap: 8px;
-      }
+  .word-select:hover, .word-select:focus {
+    border-color: #a855f7;
+  }
 
-      .copy-btn:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 8px 20px rgba(168, 85, 247, 0.4);
-      }
+  .poem-preview {
+    background: rgba(0, 0, 0, 0.4);
+    border: 1px dashed rgba(255, 255, 255, 0.1);
+    border-radius: 8px;
+    padding: 16px;
+    font-style: italic;
+    color: #d4d4d8;
+    line-height: 1.6;
+    font-size: 0.95rem;
+    min-height: 80px;
+    white-space: pre-wrap;
+  }
 
-      .copy-btn:active {
-        transform: translateY(0);
-      }
+  .copy-btn {
+    width: 100%;
+    padding: 14px;
+    background: var(--accent-gradient);
+    border: none;
+    border-radius: 10px;
+    color: white;
+    font-weight: 700;
+    font-size: 1rem;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    margin-top: 16px;
+  }
 
-      /* Stats Bar */
-      .stats-bar {
-        display: flex;
-        justify-content: space-around;
-        padding: 16px;
-        background: rgba(255, 255, 255, 0.02);
-        border-radius: 12px;
-        border: 1px solid rgba(255, 255, 255, 0.05);
-        margin-top: 20px;
-      }
+  .copy-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px rgba(168, 85, 247, 0.4);
+  }
 
-      .stat-item {
-        text-align: center;
-      }
-      .stat-value {
-        font-size: 1.25rem;
-        font-weight: 700;
-        color: #fff;
-        margin-bottom: 4px;
-      }
-      .stat-label {
-        font-size: 0.7rem;
-        color: var(--text-secondary);
-        text-transform: uppercase;
-        letter-spacing: 1px;
-      }
+  .copy-btn:active { transform: translateY(0); }
 
-      .countdown {
-        text-align: center;
-        font-size: 0.85rem;
-        color: var(--text-secondary);
-        margin-top: 20px;
-        font-variant-numeric: tabular-nums;
-      }
+  .stats-bar {
+    display: flex;
+    justify-content: space-around;
+    padding: 16px;
+    background: rgba(255, 255, 255, 0.02);
+    border-radius: 12px;
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    margin-top: 20px;
+  }
 
-      .countdown span {
-        color: #a855f7;
-        font-weight: 700;
-      }
+  .stat-item { text-align: center; }
+  .stat-value { font-size: 1.25rem; font-weight: 700; color: #fff; margin-bottom: 4px; }
+  .stat-label { font-size: 0.7rem; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 1px; }
 
-      .sdk-credit {
-        text-align: center;
-        font-size: 0.75rem;
-        color: var(--text-secondary);
-        margin-top: 30px;
-        opacity: 0.6;
-      }
-    </style>
-  </head>
-  <body>
-    <div class="container">
-      <div class="header">
-        <h1>Yomamadoodle</h1>
-        <p>One daily clip. Hidden patterns. Infinite laughs.</p>
-      </div>
+  .countdown {
+    text-align: center;
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+    margin-top: 20px;
+    font-variant-numeric: tabular-nums;
+  }
 
-      <div class="card">
-        <div class="video-player">
-          <div class="yt-header">
-            <div class="yt-avatar">YM</div>
-            <div class="yt-info">
-              <div class="yt-title">Daily Yo Mama Clip</div>
-              <div class="yt-channel">Yo Mama Official</div>
-            </div>
-          </div>
-          <div class="video-content">
-            <div class="daily-badge">Daily Clip</div>
-            <div class="play-button">▶</div>
-            <div class="joke-text" id="dailyJoke">Loading daily clip...</div>
-          </div>
+  .countdown span { color: #a855f7; font-weight: 700; }
+
+  .sdk-credit {
+    text-align: center;
+    font-size: 0.75rem;
+    color: var(--text-secondary);
+    margin-top: 30px;
+    opacity: 0.6;
+  }
+
+  .sdk-credit a {
+    color: #a855f7;
+    text-decoration: none;
+    transition: opacity 0.2s;
+  }
+
+  .sdk-credit a:hover { opacity: 0.8; text-decoration: underline; }
+</style>
+</head>
+<body>
+
+<div class="container">
+  <div class="header">
+    <h1>Yomamadoodle</h1>
+  </div>
+
+  <div class="card">
+    <div class="video-player">
+      <div class="yt-header">
+        <div class="yt-avatar">
+          <img src="icon.png" alt="YM" onerror="this.style.display='none'; this.parentElement.innerText='YM'">
         </div>
-
-        <div class="badge-grid" id="badgeGrid">
-          <!-- Badges injected here -->
-        </div>
-
-        <div class="ep-display">
-          <div class="ep-label">Entertainment Points (EP)</div>
-          <div class="ep-value" id="epValue">0</div>
-          <div class="ep-rarity" id="epRarity"></div>
-        </div>
-
-        <div class="poem-box" id="poemBox">
-          <!-- Poem injected here -->
-        </div>
-
-        <button class="copy-btn" onclick="copyToClipboard()">
-          <svg
-            width="16"
-            height="16"
-            fill="none"
-            stroke="currentColor"
-            stroke-width="2"
-            viewBox="0 0 24 24"
-          >
-            <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
-            <path
-              d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"
-            ></path>
-          </svg>
-          Copy Results
-        </button>
-      </div>
-
-      <div class="stats-bar">
-        <div class="stat-item">
-          <div class="stat-value" id="statDays">0</div>
-          <div class="stat-label">Days Played</div>
-        </div>
-        <div class="stat-item">
-          <div class="stat-value" id="statTotalEP">0</div>
-          <div class="stat-label">Total EP</div>
-        </div>
-        <div class="stat-item">
-          <div class="stat-value" id="statBest">Common</div>
-          <div class="stat-label">Best Rarity</div>
+        <div class="yt-info">
+          <div class="yt-title">Daily Yo Mama Clip</div>
+          <div class="yt-channel">Yo Mama</div>
         </div>
       </div>
-
-      <div class="countdown">
-        Next clip drops in <span id="countdown">00:00:00</span>
-      </div>
-
-      <div class="sdk-credit">
-        Powered by Yo Mama SDK data • No login required • Stats saved locally
+      <div class="video-content">
+        <div class="daily-badge">Daily Clip</div>
+        <div class="play-button">▶</div>
+        <div class="joke-text" id="dailyJoke">Loading daily clip...</div>
       </div>
     </div>
 
-    <script>
-      // --- 1. Seeded Random Number Generator (Deterministic Daily Seed) ---
-      function mulberry32(a) {
-        return function () {
-          var t = (a += 0x6d2b79f5);
-          t = Math.imul(t ^ (t >>> 15), t | 1);
-          t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
-          return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
-        };
+    <div class="badge-grid" id="badgeGrid"></div>
+
+    <div class="ep-display">
+      <div class="ep-label">Entertainment Points (EP)</div>
+      <div class="ep-value" id="epValue">0</div>
+      <div class="ep-rarity" id="epRarity"></div>
+    </div>
+
+    <div class="poem-builder">
+      <h3>Poem Builder</h3>
+      <div class="word-grid" id="wordGrid"></div>
+      <div class="poem-preview" id="poemPreview">Select word forms above to build your poem...</div>
+      <button class="copy-btn" onclick="copyPoem()">
+        <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+        Copy Poem & Stats
+      </button>
+    </div>
+  </div>
+
+  <div class="stats-bar">
+    <div class="stat-item">
+      <div class="stat-value" id="statDays">0</div>
+      <div class="stat-label">Days Played</div>
+    </div>
+    <div class="stat-item">
+      <div class="stat-value" id="statTotalEP">0</div>
+      <div class="stat-label">Total EP</div>
+    </div>
+    <div class="stat-item">
+      <div class="stat-value" id="statBest">Common</div>
+      <div class="stat-label">Best Rarity</div>
+    </div>
+  </div>
+
+  <div class="countdown">
+    Next clip drops in <span id="countdown">00:00:00</span>
+  </div>
+
+  <div class="sdk-credit">
+    Powered by <a href="https://github.com/voxgig-sdk/yo-mama-sdk" target="_blank" rel="noopener noreferrer">Yo Mama SDK data</a> • No login required • Stats saved locally
+  </div>
+</div>
+
+<script>
+  // --- 1. Seeded Random Number Generator ---
+  function mulberry32(a) {
+    return function() {
+      var t = a += 0x6D2B79F5;
+      t = Math.imul(t ^ t >>> 15, t | 1);
+      t ^= t + Math.imul(t ^ t >>> 7, t | 61);
+      return ((t ^ t >>> 14) >>> 0) / 4294967296;
+    }
+  }
+
+  const todayStr = new Date().toDateString();
+  let seed = 0;
+  for (let i = 0; i < todayStr.length; i++) {
+    seed = ((seed << 5) - seed) + todayStr.charCodeAt(i);
+    seed |= 0;
+  }
+  const rng = mulberry32(seed);
+
+// Inside your script tag, replace the static joke selection with:
+async function loadDailyJoke() {
+  try {
+    // Fetch from your own Vercel API route (CORS-safe)
+    const response = await fetch('/api/joke');
+    const data = await response.json();
+    
+    // Assuming the API returns { joke: "Yo mama so fat..." }
+    const dailyJoke = data.joke || "Yo mama so funny, she broke the API.";
+    document.getElementById('dailyJoke').textContent = `"${dailyJoke}"`;
+    
+    // Run your badge logic here using 'dailyJoke'
+    evaluateBadges(dailyJoke); 
+    
+  } catch (error) {
+    console.error("Failed to load joke, using fallback", error);
+    // Fallback to your local array if the API fails
+    document.getElementById('dailyJoke').textContent = `"${jokes[dailyJokeIndex]}"`;
+    evaluateBadges(jokes[dailyJokeIndex]);
+  }
+}
+
+loadDailyJoke();
+
+  const dailyJokeIndex = Math.floor(rng() * jokes.length);
+  const dailyJoke = jokes[dailyJokeIndex];
+  document.getElementById('dailyJoke').textContent = `"${dailyJoke}"`;
+
+  // --- 3. Badge & Word System ---
+  const badgeDefinitions = [
+    { id: 'classic', name: 'The Classic', rarity: 'Rare', ep: 2000, color: '#3b82f6', words: ['roast', 'roasts', 'roasting'], condition: (j) => j.toLowerCase().includes('fat') || j.toLowerCase().includes('ugly') },
+    { id: 'short_fuse', name: 'Short Fuse', rarity: 'Uncommon', ep: 500, color: '#22c55e', words: ['spark', 'sparks', 'sparking'], condition: (j) => j.length < 60 },
+    { id: 'storyteller', name: 'Storyteller', rarity: 'Uncommon', ep: 500, color: '#22c55e', words: ['tale', 'tales', 'telling'], condition: (j) => j.length > 100 },
+    { id: 'punctuation', name: 'Punctuation Punch', rarity: 'Common', ep: 100, color: '#9ca3af', words: ['bang', 'bangs', 'banging'], condition: (j) => j.includes('!') },
+    { id: 'questionable', name: 'Questionable', rarity: 'Common', ep: 100, color: '#9ca3af', words: ['why', 'whys', 'wondering'], condition: (j) => j.includes('?') },
+    { id: 'double_trouble', name: 'Double Trouble', rarity: 'Epic', ep: 10000, color: '#a855f7', words: ['echo', 'echoes', 'echoing'], condition: (j) => (j.toLowerCase().match(/yo mama/g) || []).length >= 2 },
+    { id: 'daily_viewer', name: 'Daily Viewer', rarity: 'Common', ep: 100, color: '#9ca3af', words: ['daily', 'dailies', 'day'], condition: (j) => true },
+    { id: 'perfect_roast', name: 'The Perfect Roast', rarity: 'Mythic', ep: 50000, color: '#fbbf24', words: ['mythic', 'myths', 'mythical'], condition: (j, badges) => badges.length >= 6 },
+    { id: 'vowel_void', name: 'Vowel Void', rarity: 'Rare', ep: 1500, color: '#3b82f6', words: ['vowel', 'vowels', 'vocalizing'], condition: (j) => (j.match(/[aeiou]/gi) || []).length > 30 },
+    { id: 'consonant_clash', name: 'Consonant Clash', rarity: 'Rare', ep: 1500, color: '#3b82f6', words: ['clash', 'clashes', 'clashing'], condition: (j) => (j.match(/[^aeiou\s]/gi) || []).length > 40 },
+    { id: 'alliteration_ace', name: 'Alliteration Ace', rarity: 'Epic', ep: 8000, color: '#a855f7', words: ['alliance', 'alliances', 'aligning'], condition: (j) => /\b([a-zA-Z])\w*\s+\1\w*/i.test(j) },
+    { id: 'word_wizard', name: 'Word Wizard', rarity: 'Epic', ep: 8000, color: '#a855f7', words: ['spell', 'spells', 'casting'], condition: (j) => j.split(' ').length > 15 },
+    { id: 'laugh_track', name: 'Laugh Track', rarity: 'Uncommon', ep: 750, color: '#22c55e', words: ['laugh', 'laughs', 'laughing'], condition: (j) => j.toLowerCase().includes('laugh') || j.toLowerCase().includes('lol') },
+    { id: 'wall_street', name: 'Wall Street', rarity: 'Rare', ep: 2500, color: '#3b82f6', words: ['market', 'markets', 'trading'], condition: (j) => j.toLowerCase().includes('stock') || j.toLowerCase().includes('market') || j.toLowerCase().includes('money') },
+    { id: 'foodie', name: 'The Foodie', rarity: 'Uncommon', ep: 600, color: '#22c55e', words: ['feast', 'feasts', 'feasting'], condition: (j) => j.toLowerCase().includes('eat') || j.toLowerCase().includes('food') || j.toLowerCase().includes('meal') || j.toLowerCase().includes('hungry') },
+    { id: 'tech_savvy', name: 'Tech Savvy', rarity: 'Rare', ep: 2000, color: '#3b82f6', words: ['tech', 'techs', 'coding'], condition: (j) => j.toLowerCase().includes('google') || j.toLowerCase().includes('twitter') || j.toLowerCase().includes('app') || j.toLowerCase().includes('internet') },
+    { id: 'animal_lover', name: 'Animal Lover', rarity: 'Uncommon', ep: 700, color: '#22c55e', words: ['beast', 'beasts', 'roaming'], condition: (j) => j.toLowerCase().includes('duck') || j.toLowerCase().includes('dog') || j.toLowerCase().includes('cat') || j.toLowerCase().includes('animal') },
+    { id: 'family_ties', name: 'Family Ties', rarity: 'Common', ep: 300, color: '#9ca3af', words: ['kin', 'kins', 'relating'], condition: (j) => j.toLowerCase().includes('dad') || j.toLowerCase().includes('mom') || j.toLowerCase().includes('brother') || j.toLowerCase().includes('sister') },
+    { id: 'time_traveler', name: 'Time Traveler', rarity: 'Epic', ep: 9000, color: '#a855f7', words: ['time', 'times', 'timing'], condition: (j) => j.toLowerCase().includes('time') || j.toLowerCase().includes('clock') || j.toLowerCase().includes('watch') },
+    { id: 'mirror_image', name: 'Mirror Image', rarity: 'Rare', ep: 2200, color: '#3b82f6', words: ['mirror', 'mirrors', 'reflecting'], condition: (j) => j.toLowerCase().includes('look') || j.toLowerCase().includes('see') || j.toLowerCase().includes('mirror') }
+  ];
+
+  const unlockedBadges = [];
+  let ep = 0;
+
+  badgeDefinitions.forEach(def => {
+    if (def.condition(dailyJoke, unlockedBadges)) {
+      unlockedBadges.push(def);
+      ep += def.ep;
+    }
+  });
+
+  // Render Badges
+  const badgeGrid = document.getElementById('badgeGrid');
+  unlockedBadges.forEach(badge => {
+    const el = document.createElement('div');
+    el.className = 'badge';
+    el.style.borderColor = badge.color + '40';
+    el.style.color = badge.color;
+    el.innerHTML = `<span class="rarity-dot" style="background: ${badge.color}"></span>${badge.name}`;
+    badgeGrid.appendChild(el);
+  });
+
+  // --- 4. Poem Builder System ---
+  const wordGrid = document.getElementById('wordGrid');
+  const poemPreview = document.getElementById('poemPreview');
+
+  unlockedBadges.forEach((badge, index) => {
+    const select = document.createElement('select');
+    select.className = 'word-select';
+    select.dataset.badgeId = badge.id;
+    
+    badge.words.forEach((word, wordIndex) => {
+      const option = document.createElement('option');
+      option.value = word;
+      option.textContent = word;
+      if (wordIndex === 0) option.selected = true;
+      select.appendChild(option);
+    });
+    
+    select.addEventListener('change', updatePoemPreview);
+    wordGrid.appendChild(select);
+  });
+
+  function updatePoemPreview() {
+    const selects = document.querySelectorAll('.word-select');
+    const words = Array.from(selects).map(s => s.value);
+    
+    // Create a poetic, RNGdle-style abstract arrangement
+    const lines = [
+      `${words[0] || 'the'} ${words[1] || 'void'} ${words[2] || 'echoes'},`,
+      `${words[3] || 'a'} ${words[4] || 'spark'} ${words[5] || 'in'} the ${words[6] || 'dark'},`,
+      `${words[7] || 'the'} ${words[8] || 'mythical'} ${words[9] || 'roast'} ${words[10] || 'begins'},`,
+      `${words[11] || 'forever'} ${words[12] || 'aligning'}.`
+    ];
+    
+    poemPreview.textContent = lines.join('\n');
+  }
+
+  // Initialize preview
+  updatePoemPreview();
+
+  // --- 5. Copy Functionality ---
+  function copyPoem() {
+    const rarityOrder = ["Mythic", "Epic", "Rare", "Uncommon", "Common"];
+    let highestRarity = "Common";
+    for (const r of rarityOrder) {
+      if (unlockedBadges.some(b => b.rarity === r)) {
+        highestRarity = r;
+        break;
       }
+    }
 
-      const todayStr = new Date().toDateString();
-      let seed = 0;
-      for (let i = 0; i < todayStr.length; i++) {
-        seed = (seed << 5) - seed + todayStr.charCodeAt(i);
-        seed |= 0;
-      }
-      const rng = mulberry32(seed);
+    let topPercent = 50;
+    if (ep >= 50000) topPercent = 1;
+    else if (ep >= 10000) topPercent = 5;
+    else if (ep >= 5000) topPercent = 10;
+    else if (ep >= 2000) topPercent = 25;
 
-      // --- 2. Yo Mama SDK Data Fallback ---
-      // Note: In a production environment with a backend, this would fetch directly from the Yo Mama SDK API.
-      // For a standalone client-side file, we use a robust dataset mirroring the SDK's entity structure to avoid CORS issues.
-      const jokes = [
-        "Yo mama so fat, when she skips a meal, the stock market drops.",
-        "Yo mama so stupid, she thought a quarterback was a refund.",
-        "Yo mama so ugly, she made an onion cry.",
-        "Yo mama so poor, ducks throw bread at her.",
-        "Yo mama so fat, she has her own area code.",
-        "Yo mama so stupid, she put two quarters in her ears and thought she was listening to 50 Cent.",
-        "Yo mama so ugly, when she walks into a bank, they turn off the surveillance cameras.",
-        "Yo mama so fat, when she wears a yellow raincoat, people yell 'Taxi!'",
-        "Yo mama so poor, she can't even pay attention.",
-        "Yo mama so stupid, she climbed over a glass wall to see what was on the other side.",
-        "Yo mama so ugly, her portraits hang themselves.",
-        "Yo mama so fat, she stepped on a scale and it said 'To be continued...'",
-        "Yo mama so stupid, she got locked in a grocery store and starved to death.",
-        "Yo mama so poor, she waves around a popsicle stick and calls it air conditioning.",
-        "Yo mama so ugly, she turned Medusa to stone.",
-        "Yo mama so fat, when she goes to the beach, the tide comes in.",
-        "Yo mama so stupid, she studied for a drug test.",
-        "Yo mama so poor, she married young just to get the rice.",
-        "Yo mama so ugly, when she was born, the doctor slapped everybody.",
-        "Yo mama so fat, she uses a mattress as a tampon.",
-        "Yo mama so stupid, she thought Dunkin' Donuts was a basketball team.",
-        "Yo mama so poor, she goes to KFC to lick other people's fingers.",
-        "Yo mama so ugly, she made a blind kid cry.",
-        "Yo mama so fat, when she sits around the house, she really sits AROUND the house.",
-        "Yo mama so stupid, she sold her car for gas money.",
-        "Yo mama so poor, she can't even afford to pay attention.",
-        "Yo mama so ugly, her birth certificate is an apology letter.",
-        "Yo mama so fat, she uses Google Earth to take a selfie.",
-        "Yo mama so stupid, she put a watch in a piggy bank and said she was saving time.",
-        "Yo mama so poor, she chases the garbage truck with a grocery list.",
-        "Yo mama so ugly, she threw a boomerang and it refused to come back.",
-        "Yo mama so fat, she jumped up in the air and got stuck.",
-        "Yo mama so stupid, she thought Twitter was a bird watching app.",
-        "Yo mama so poor, she can't even afford a free trial.",
-        "Yo mama so ugly, she made a happy meal cry."
-      ];
+    const badgeNames = unlockedBadges.map(b => b.name).join(", ");
+    const poemText = poemPreview.textContent;
 
-      const dailyJokeIndex = Math.floor(rng() * jokes.length);
-      const dailyJoke = jokes[dailyJokeIndex];
-      document.getElementById("dailyJoke").textContent = `"${dailyJoke}"`;
-
-      // --- 3. Badge & EP System ---
-      const badges = [];
-      let ep = 0;
-      const lowerJoke = dailyJoke.toLowerCase();
-
-      function addBadge(name, rarity, epValue, color) {
-        badges.push({ name, rarity, ep: epValue, color });
-        ep += epValue;
-      }
-
-      // Badge Conditions
-      if (lowerJoke.includes("fat") || lowerJoke.includes("ugly")) {
-        addBadge("The Classic", "Rare", 2000, "#3b82f6");
-      }
-      if (dailyJoke.length < 60) {
-        addBadge("Short Fuse", "Uncommon", 500, "#22c55e");
-      }
-      if (dailyJoke.length > 100) {
-        addBadge("Storyteller", "Uncommon", 500, "#22c55e");
-      }
-      if (dailyJoke.includes("!")) {
-        addBadge("Punctuation Punch", "Common", 100, "#9ca3af");
-      }
-      if (dailyJoke.includes("?")) {
-        addBadge("Questionable", "Common", 100, "#9ca3af");
-      }
-
-      const yoMamaCount = (lowerJoke.match(/yo mama/g) || []).length;
-      if (yoMamaCount >= 2) {
-        addBadge("Double Trouble", "Epic", 10000, "#a855f7");
-      }
-
-      // Always award Daily Viewer
-      addBadge("Daily Viewer", "Common", 100, "#9ca3af");
-
-      // Mythic condition: 3+ badges earned
-      if (badges.length >= 4) {
-        addBadge("The Perfect Roast", "Mythic", 50000, "#fbbf24");
-      }
-
-      // Render Badges
-      const badgeGrid = document.getElementById("badgeGrid");
-      badges.forEach((badge) => {
-        const el = document.createElement("div");
-        el.className = "badge";
-        el.style.borderColor = badge.color + "40";
-        el.style.color = badge.color;
-        el.innerHTML = `<span class="rarity-dot" style="background: ${badge.color}"></span>${badge.name}`;
-        badgeGrid.appendChild(el);
-      });
-
-      // --- 4. Rarity & Poem Logic ---
-      const rarityOrder = ["Mythic", "Epic", "Rare", "Uncommon", "Common"];
-      let highestRarity = "Common";
-      for (const r of rarityOrder) {
-        if (badges.some((b) => b.rarity === r)) {
-          highestRarity = r;
-          break;
-        }
-      }
-
-      const poems = {
-        Mythic:
-          "the cosmos bends to hear the punchline.\nstars align in perfect comedic timing.\nyou have witnessed the absolute peak.\nlaughter echoes in the void.",
-        Epic: "thunder rolls on a distant stage.\na rare alignment of words and wit.\nthe audience holds its breath.\nthe punchline strikes like lightning.",
-        Rare: "a clever twist in the everyday.\nhidden gems in the comedy stream.\nyou found the spark in the mundane.\na rare moment of genuine joy.",
-        Uncommon:
-          "a gentle ripple in the daily tide.\nnot quite legendary, but still a ride.\na smile formed, a moment passed.\nthe uncommon finds you at last.",
-        Common:
-          "the wheel turns, the joke is told.\na familiar rhythm, brave and bold.\nnothing strange, nothing new.\njust a daily chuckle for you."
-      };
-
-      const dailyPoem = poems[highestRarity];
-      document.getElementById("poemBox").textContent = dailyPoem;
-
-      // EP Display
-      document.getElementById("epValue").textContent = ep.toLocaleString();
-
-      let topPercent = 50;
-      if (ep >= 50000) topPercent = 1;
-      else if (ep >= 10000) topPercent = 5;
-      else if (ep >= 5000) topPercent = 10;
-      else if (ep >= 2000) topPercent = 25;
-
-      const rarityColor =
-        badges.find((b) => b.rarity === highestRarity)?.color || "#9ca3af";
-      document.getElementById("epRarity").innerHTML =
-        `<span style="color: ${rarityColor}">●</span> ${highestRarity.toUpperCase()} • Top ${topPercent}%`;
-
-      // --- 5. Copy Functionality (RNGdle Style) ---
-      function copyToClipboard() {
-        const badgeNames = badges.map((b) => b.name).join(", ");
-        const text = `Yomamadoodle 🎬
+    const text = `Yomamadoodle 🎬
 "${dailyJoke}"
 🟦 ${highestRarity.toUpperCase()} • Top ${topPercent}% 🟦
 🏆 ${badgeNames}
 ⚡ ${ep.toLocaleString()} EP
 
-${dailyPoem}`;
+📜 My Poem:
+${poemText}`;
+    
+    navigator.clipboard.writeText(text).then(() => {
+      const btn = document.querySelector('.copy-btn');
+      const originalText = btn.innerHTML;
+      btn.innerHTML = `✓ Copied to Clipboard!`;
+      btn.style.background = "linear-gradient(135deg, #22c55e, #16a34a)";
+      setTimeout(() => {
+        btn.innerHTML = originalText;
+        btn.style.background = "";
+      }, 2000);
+    });
+  }
 
-        navigator.clipboard.writeText(text).then(() => {
-          const btn = document.querySelector(".copy-btn");
-          const originalText = btn.innerHTML;
-          btn.innerHTML = `✓ Copied to Clipboard!`;
-          btn.style.background = "linear-gradient(135deg, #22c55e, #16a34a)";
-          setTimeout(() => {
-            btn.innerHTML = originalText;
-            btn.style.background = "";
-          }, 2000);
-        });
-      }
+  // --- 6. Temporary Stats System ---
+  const stats = JSON.parse(localStorage.getItem('yomamadoodle_stats')) || {
+    totalEP: 0,
+    daysPlayed: 0,
+    bestRarity: "Common",
+    lastPlayed: null
+  };
 
-      // --- 6. Temporary Stats System (localStorage) ---
-      const stats = JSON.parse(localStorage.getItem("yomamadoodle_stats")) || {
-        totalEP: 0,
-        daysPlayed: 0,
-        bestRarity: "Common",
-        lastPlayed: null
-      };
+  const rarityOrder = ["Mythic", "Epic", "Rare", "Uncommon", "Common"];
+  let todayHighestRarity = "Common";
+  for (const r of rarityOrder) {
+    if (unlockedBadges.some(b => b.rarity === r)) {
+      todayHighestRarity = r;
+      break;
+    }
+  }
 
-      if (stats.lastPlayed !== todayStr) {
-        stats.daysPlayed += 1;
-        stats.lastPlayed = todayStr;
+  if (stats.lastPlayed !== todayStr) {
+    stats.daysPlayed += 1;
+    stats.lastPlayed = todayStr;
+    
+    const currentBestIndex = rarityOrder.indexOf(stats.bestRarity);
+    const newIndex = rarityOrder.indexOf(todayHighestRarity);
+    if (newIndex < currentBestIndex) {
+      stats.bestRarity = todayHighestRarity;
+    }
+  }
+  
+  if (!stats.lastEPAdded || stats.lastEPAdded !== todayStr) {
+    stats.totalEP += ep;
+    stats.lastEPAdded = todayStr;
+  }
+  
+  localStorage.setItem('yomamadoodle_stats', JSON.stringify(stats));
 
-        const currentBestIndex = rarityOrder.indexOf(stats.bestRarity);
-        const newIndex = rarityOrder.indexOf(highestRarity);
-        if (newIndex < currentBestIndex) {
-          stats.bestRarity = highestRarity;
-        }
-      }
+  document.getElementById('statDays').textContent = stats.daysPlayed;
+  document.getElementById('statTotalEP').textContent = stats.totalEP.toLocaleString();
+  document.getElementById('statBest').textContent = stats.bestRarity;
+  
+  const bestBadge = badgeDefinitions.find(b => b.rarity === stats.bestRarity);
+  document.getElementById('statBest').style.color = bestBadge ? bestBadge.color : "#fff";
 
-      // Only add EP once per day to prevent refresh farming
-      if (!stats.lastEPAdded || stats.lastEPAdded !== todayStr) {
-        stats.totalEP += ep;
-        stats.lastEPAdded = todayStr;
-      }
+  // --- 7. EP Display & Countdown ---
+  document.getElementById('epValue').textContent = ep.toLocaleString();
+  
+  let topPercent = 50;
+  if (ep >= 50000) topPercent = 1;
+  else if (ep >= 10000) topPercent = 5;
+  else if (ep >= 5000) topPercent = 10;
+  else if (ep >= 2000) topPercent = 25;
 
-      localStorage.setItem("yomamadoodle_stats", JSON.stringify(stats));
+  const rarityColor = unlockedBadges.find(b => b.rarity === todayHighestRarity)?.color || "#9ca3af";
+  document.getElementById('epRarity').innerHTML = `<span style="color: ${rarityColor}">●</span> ${todayHighestRarity.toUpperCase()} • Top ${topPercent}%`;
 
-      document.getElementById("statDays").textContent = stats.daysPlayed;
-      document.getElementById("statTotalEP").textContent =
-        stats.totalEP.toLocaleString();
-      document.getElementById("statBest").textContent = stats.bestRarity;
-      document.getElementById("statBest").style.color =
-        badges.find((b) => b.rarity === stats.bestRarity)?.color || "#fff";
+  function updateCountdown() {
+    const now = new Date();
+    const tomorrow = new Date(now);
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    tomorrow.setHours(0, 0, 0, 0);
+    const diff = tomorrow - now;
+    
+    const hours = Math.floor(diff / (1000 * 60 * 60));
+    const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+    const seconds = Math.floor((diff % (1000 * 60)) / 1000);
+    
+    document.getElementById('countdown').textContent = 
+      `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+  }
+  
+  setInterval(updateCountdown, 1000);
+  updateCountdown();
+</script>
 
-      // --- 7. Countdown Timer ---
-      function updateCountdown() {
-        const now = new Date();
-        const tomorrow = new Date(now);
-        tomorrow.setDate(tomorrow.getDate() + 1);
-        tomorrow.setHours(0, 0, 0, 0);
-        const diff = tomorrow - now;
-
-        const hours = Math.floor(diff / (1000 * 60 * 60));
-        const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
-        const seconds = Math.floor((diff % (1000 * 60)) / 1000);
-
-        document.getElementById("countdown").textContent =
-          `${hours.toString().padStart(2, "0")}:${minutes.toString().padStart(2, "0")}:${seconds.toString().padStart(2, "0")}`;
-      }
-
-      setInterval(updateCountdown, 1000);
-      updateCountdown();
-    </script>
-  </body>
+</body>
 </html>
