@@ -50,7 +50,6 @@
     background: var(--accent-gradient);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
-    margin-bottom: 8px;
     letter-spacing: -1px;
   }
 
@@ -91,6 +90,7 @@
     display: flex;
     align-items: center;
     justify-content: center;
+    flex-shrink: 0;
   }
 
   .yt-avatar img {
@@ -103,47 +103,69 @@
   .yt-title { font-weight: 600; font-size: 0.9rem; }
   .yt-channel { font-size: 0.75rem; color: var(--text-secondary); }
 
-  .video-content {
-    aspect-ratio: 16/9;
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    align-items: center;
-    padding: 20px;
+  .video-embed-container {
     position: relative;
-    background: linear-gradient(135deg, #18181b, #09090b);
+    width: 100%;
+    aspect-ratio: 16/9;
+    background: #000;
   }
 
-  .play-button {
-    width: 64px;
-    height: 64px;
-    background: rgba(255, 255, 255, 0.1);
+  .video-embed-container iframe {
+    width: 100%;
+    height: 100%;
+    border: none;
+  }
+
+  .play-button-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(0, 0, 0, 0.4);
+    cursor: pointer;
+    transition: background 0.3s ease;
+    z-index: 10;
+  }
+
+  .play-button-overlay:hover {
+    background: rgba(0, 0, 0, 0.2);
+  }
+
+  .play-button-overlay.hidden {
+    display: none;
+  }
+
+  .play-button-circle {
+    width: 80px;
+    height: 80px;
+    background: rgba(255, 255, 255, 0.15);
     border-radius: 50%;
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 24px;
-    cursor: pointer;
+    backdrop-filter: blur(8px);
+    border: 2px solid rgba(255, 255, 255, 0.3);
     transition: all 0.3s ease;
-    backdrop-filter: blur(4px);
-    border: 1px solid rgba(255, 255, 255, 0.2);
-    margin-bottom: 16px;
   }
 
-  .play-button:hover {
+  .play-button-overlay:hover .play-button-circle {
     background: rgba(168, 85, 247, 0.3);
     transform: scale(1.1);
-    box-shadow: 0 0 20px rgba(168, 85, 247, 0.4);
+    box-shadow: 0 0 30px rgba(168, 85, 247, 0.5);
+    border-color: rgba(168, 85, 247, 0.6);
   }
 
-  .joke-text {
-    font-size: 1.15rem;
-    font-weight: 600;
-    text-align: center;
-    line-height: 1.5;
-    color: #fff;
-    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
-    max-width: 90%;
+  .play-triangle {
+    width: 0;
+    height: 0;
+    border-left: 24px solid white;
+    border-top: 16px solid transparent;
+    border-bottom: 16px solid transparent;
+    margin-left: 6px;
   }
 
   .daily-badge {
@@ -158,6 +180,18 @@
     border-radius: 4px;
     text-transform: uppercase;
     letter-spacing: 0.5px;
+    z-index: 2;
+    pointer-events: none;
+  }
+
+  .joke-transcript {
+    padding: 16px;
+    text-align: center;
+    font-size: 1rem;
+    color: var(--text-secondary);
+    font-style: italic;
+    border-top: 1px solid rgba(255, 255, 255, 0.05);
+    background: rgba(0, 0, 0, 0.2);
   }
 
   .badge-grid {
@@ -196,7 +230,6 @@
   .ep-value { font-size: 3rem; font-weight: 800; background: var(--ep-gradient); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
   .ep-rarity { font-size: 0.9rem; font-weight: 600; margin-top: 8px; }
 
-  /* Poem Builder Styles */
   .poem-builder {
     background: rgba(0, 0, 0, 0.3);
     border-left: 3px solid #a855f7;
@@ -339,11 +372,25 @@
           <div class="yt-channel">Yo Mama</div>
         </div>
       </div>
-      <div class="video-content">
+      <div class="video-embed-container">
         <div class="daily-badge">Daily Clip</div>
-        <div class="play-button">▶</div>
-        <div class="joke-text" id="dailyJoke">Loading daily clip...</div>
+        <div class="play-button-overlay" id="playButtonOverlay">
+          <div class="play-button-circle">
+            <div class="play-triangle"></div>
+          </div>
+        </div>
+        <iframe 
+          id="dailyVideo"
+          width="100%" 
+          height="100%" 
+          src="about:blank"
+          title="Daily Yo Mama Clip" 
+          frameborder="0" 
+          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" 
+          allowfullscreen
+        ></iframe>
       </div>
+      <div class="joke-transcript" id="dailyJoke">Loading daily transcript...</div>
     </div>
 
     <div class="badge-grid" id="badgeGrid"></div>
@@ -408,33 +455,69 @@
   }
   const rng = mulberry32(seed);
 
-// Inside your script tag, replace the static joke selection with:
-async function loadDailyJoke() {
-  try {
-    // Fetch from your own Vercel API route (CORS-safe)
-    const response = await fetch('/api/joke');
-    const data = await response.json();
-    
-    // Assuming the API returns { joke: "Yo mama so fat..." }
-    const dailyJoke = data.joke || "Yo mama so funny, she broke the API.";
-    document.getElementById('dailyJoke').textContent = `"${dailyJoke}"`;
-    
-    // Run your badge logic here using 'dailyJoke'
-    evaluateBadges(dailyJoke); 
-    
-  } catch (error) {
-    console.error("Failed to load joke, using fallback", error);
-    // Fallback to your local array if the API fails
-    document.getElementById('dailyJoke').textContent = `"${jokes[dailyJokeIndex]}"`;
-    evaluateBadges(jokes[dailyJokeIndex]);
-  }
-}
+  // --- 2. Real Yo Mama Video IDs & Transcript Data ---
+  const videoIds = [
+    "cOlUB_W-Sig",
+    "xvV1jl96bRE",
+    "plaQmxzaEpI",
+    "EvmzGCCoue0",
+    "2QxvFAiYDJs"
+  ];
 
-loadDailyJoke();
+  const jokes = [
+    "Yo mama so fat, when she skips a meal, the stock market drops.",
+    "Yo mama so stupid, she thought a quarterback was a refund.",
+    "Yo mama so ugly, she made an onion cry.",
+    "Yo mama so poor, ducks throw bread at her.",
+    "Yo mama so fat, she has her own area code.",
+    "Yo mama so stupid, she put two quarters in her ears and thought she was listening to 50 Cent.",
+    "Yo mama so ugly, when she walks into a bank, they turn off the surveillance cameras.",
+    "Yo mama so fat, when she wears a yellow raincoat, people yell 'Taxi!'",
+    "Yo mama so poor, she can't even pay attention.",
+    "Yo mama so stupid, she climbed over a glass wall to see what was on the other side.",
+    "Yo mama so ugly, her portraits hang themselves.",
+    "Yo mama so fat, she stepped on a scale and it said 'To be continued...'",
+    "Yo mama so stupid, she got locked in a grocery store and starved to death.",
+    "Yo mama so poor, she waves around a popsicle stick and calls it air conditioning.",
+    "Yo mama so ugly, she turned Medusa to stone.",
+    "Yo mama so fat, when she goes to the beach, the tide comes in.",
+    "Yo mama so stupid, she studied for a drug test.",
+    "Yo mama so poor, she married young just to get the rice.",
+    "Yo mama so ugly, when she was born, the doctor slapped everybody.",
+    "Yo mama so fat, she uses a mattress as a tampon.",
+    "Yo mama so stupid, she thought Dunkin' Donuts was a basketball team.",
+    "Yo mama so poor, she goes to KFC to lick other people's fingers.",
+    "Yo mama so ugly, she made a blind kid cry.",
+    "Yo mama so fat, when she sits around the house, she really sits AROUND the house.",
+    "Yo mama so stupid, she sold her car for gas money.",
+    "Yo mama so poor, she can't even afford to pay attention.",
+    "Yo mama so ugly, her birth certificate is an apology letter.",
+    "Yo mama so fat, she uses Google Earth to take a selfie.",
+    "Yo mama so stupid, she put a watch in a piggy bank and said she was saving time.",
+    "Yo mama so poor, she chases the garbage truck with a grocery list.",
+    "Yo mama so ugly, she threw a boomerang and it refused to come back.",
+    "Yo mama so fat, she jumped up in the air and got stuck.",
+    "Yo mama so stupid, she thought Twitter was a bird watching app.",
+    "Yo mama so poor, she can't even afford a free trial.",
+    "Yo mama so ugly, she made a happy meal cry."
+  ];
 
+  const dailyVideoIndex = Math.floor(rng() * videoIds.length);
+  const dailyVideoId = videoIds[dailyVideoIndex];
+  
   const dailyJokeIndex = Math.floor(rng() * jokes.length);
   const dailyJoke = jokes[dailyJokeIndex];
-  document.getElementById('dailyJoke').textContent = `"${dailyJoke}"`;
+
+  document.getElementById('dailyJoke').textContent = `Transcript: "${dailyJoke}"`;
+
+  // --- Play Button Click Handler ---
+  const playButtonOverlay = document.getElementById('playButtonOverlay');
+  const dailyVideoIframe = document.getElementById('dailyVideo');
+
+  playButtonOverlay.addEventListener('click', () => {
+    dailyVideoIframe.src = `https://www.youtube-nocookie.com/embed/${dailyVideoId}?rel=0&modestbranding=1&autoplay=1`;
+    playButtonOverlay.classList.add('hidden');
+  });
 
   // --- 3. Badge & Word System ---
   const badgeDefinitions = [
@@ -470,7 +553,6 @@ loadDailyJoke();
     }
   });
 
-  // Render Badges
   const badgeGrid = document.getElementById('badgeGrid');
   unlockedBadges.forEach(badge => {
     const el = document.createElement('div');
@@ -485,7 +567,7 @@ loadDailyJoke();
   const wordGrid = document.getElementById('wordGrid');
   const poemPreview = document.getElementById('poemPreview');
 
-  unlockedBadges.forEach((badge, index) => {
+  unlockedBadges.forEach((badge) => {
     const select = document.createElement('select');
     select.className = 'word-select';
     select.dataset.badgeId = badge.id;
@@ -506,7 +588,6 @@ loadDailyJoke();
     const selects = document.querySelectorAll('.word-select');
     const words = Array.from(selects).map(s => s.value);
     
-    // Create a poetic, RNGdle-style abstract arrangement
     const lines = [
       `${words[0] || 'the'} ${words[1] || 'void'} ${words[2] || 'echoes'},`,
       `${words[3] || 'a'} ${words[4] || 'spark'} ${words[5] || 'in'} the ${words[6] || 'dark'},`,
@@ -517,7 +598,6 @@ loadDailyJoke();
     poemPreview.textContent = lines.join('\n');
   }
 
-  // Initialize preview
   updatePoemPreview();
 
   // --- 5. Copy Functionality ---
