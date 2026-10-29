@@ -242,6 +242,8 @@
         transition:
           transform 0.2s,
           box-shadow 0.2s;
+        position: relative;
+        cursor: help;
       }
 
       .badge:hover {
@@ -251,6 +253,59 @@
         width: 8px;
         height: 8px;
         border-radius: 50%;
+      }
+
+      /* Tooltip Styles */
+      .badge-tooltip {
+        position: absolute;
+        bottom: calc(100% + 8px);
+        left: 50%;
+        transform: translateX(-50%);
+        background: rgba(0, 0, 0, 0.95);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        border-radius: 8px;
+        padding: 12px;
+        min-width: 200px;
+        max-width: 280px;
+        opacity: 0;
+        pointer-events: none;
+        transition: opacity 0.2s;
+        z-index: 100;
+        backdrop-filter: blur(8px);
+      }
+
+      .badge:hover .badge-tooltip {
+        opacity: 1;
+      }
+
+      .badge-tooltip::after {
+        content: "";
+        position: absolute;
+        top: 100%;
+        left: 50%;
+        transform: translateX(-50%);
+        border: 6px solid transparent;
+        border-top-color: rgba(0, 0, 0, 0.95);
+      }
+
+      .tooltip-title {
+        font-weight: 700;
+        font-size: 0.9rem;
+        margin-bottom: 6px;
+        color: #fff;
+      }
+
+      .tooltip-description {
+        font-size: 0.8rem;
+        color: var(--text-secondary);
+        line-height: 1.4;
+        margin-bottom: 8px;
+      }
+
+      .tooltip-ep {
+        font-size: 0.75rem;
+        font-weight: 600;
+        color: #fbbf24;
       }
 
       .ep-display {
@@ -566,8 +621,6 @@
       const rng = mulberry32(seed);
 
       // --- 2. Yo Mama Video Data with Timestamps ---
-      // Video data structure: { id, timestamp, joke }
-      // Timestamps are in seconds where the joke begins
       const videoData = [
         {
           id: "EvmzGCCoue0",
@@ -596,7 +649,6 @@
         }
       ];
 
-      // Select daily video
       const dailyVideoIndex = Math.floor(rng() * videoData.length);
       const dailyVideo = videoData[dailyVideoIndex];
       const dailyJoke = dailyVideo.joke;
@@ -604,73 +656,714 @@
       document.getElementById("dailyJoke").textContent =
         `Transcript: "${dailyJoke}"`;
 
-      // --- Play Button Click Handler ---
       const playButtonOverlay = document.getElementById("playButtonOverlay");
       const dailyVideoIframe = document.getElementById("dailyVideo");
 
       playButtonOverlay.addEventListener("click", () => {
-        // Load video starting at the joke timestamp
         dailyVideoIframe.src = `https://www.youtube-nocookie.com/embed/${dailyVideo.id}?rel=0&modestbranding=1&autoplay=1&start=${dailyVideo.timestamp}`;
         playButtonOverlay.classList.add("hidden");
       });
 
-      // --- 3. Expanded Badge & Word System ---
+      // --- 3. Expanded Badge System with Descriptions ---
       const badgeDefinitions = [
         {
-          id: "classic",
-          name: "The Classic",
+          id: "fat_joke",
+          name: "Heavy Hitter",
           rarity: "Rare",
           ep: 2000,
           color: "#3b82f6",
-          words: ["roast", "roasts", "roasting", "it", "of"],
-          condition: (j) =>
-            j.toLowerCase().includes("fat") || j.toLowerCase().includes("ugly")
+          description:
+            "A classic fat joke that hits with the weight of a thousand pizzas.",
+          words: ["heavy", "heavier", "heaving", "weight", "weighs"],
+          condition: (j) => j.toLowerCase().includes("fat")
         },
         {
-          id: "short_fuse",
-          name: "Short Fuse",
-          rarity: "Uncommon",
-          ep: 500,
-          color: "#22c55e",
-          words: ["spark", "sparks", "sparking", "and", "the"],
-          condition: (j) => j.length < 60
+          id: "ugly_joke",
+          name: "Ugly Truth",
+          rarity: "Rare",
+          ep: 2000,
+          color: "#3b82f6",
+          description:
+            "Sometimes the truth hurts, especially when it involves mirrors.",
+          words: ["ugly", "uglier", "ugliness", "hideous", "unsightly"],
+          condition: (j) => j.toLowerCase().includes("ugly")
         },
         {
-          id: "storyteller",
+          id: "stupid_joke",
+          name: "Not So Bright",
+          rarity: "Rare",
+          ep: 2000,
+          color: "#3b82f6",
+          description:
+            "When intelligence takes a vacation and never comes back.",
+          words: ["dumb", "dumber", "dumbest", "stupid", "foolish"],
+          condition: (j) => j.toLowerCase().includes("stupid")
+        },
+        {
+          id: "poor_joke",
+          name: "Broke Life",
+          rarity: "Rare",
+          ep: 2000,
+          color: "#3b82f6",
+          description:
+            "Financial struggles so severe, even pennies avoid them.",
+          words: ["poor", "poorer", "poorest", "broke", "penniless"],
+          condition: (j) => j.toLowerCase().includes("poor")
+        },
+        {
+          id: "short_joke",
+          name: "Quick Wit",
+          rarity: "Common",
+          ep: 300,
+          color: "#9ca3af",
+          description: "Short, sweet, and straight to the punchline.",
+          words: ["quick", "quicker", "quickest", "fast", "rapid"],
+          condition: (j) => j.length < 50
+        },
+        {
+          id: "medium_joke",
+          name: "Balanced",
+          rarity: "Common",
+          ep: 400,
+          color: "#9ca3af",
+          description: "The Goldilocks of jokes - not too long, not too short.",
+          words: ["balanced", "balancing", "even", "steady", "middle"],
+          condition: (j) => j.length >= 50 && j.length <= 80
+        },
+        {
+          id: "long_joke",
           name: "Storyteller",
           rarity: "Uncommon",
-          ep: 500,
+          ep: 600,
           color: "#22c55e",
-          words: ["tale", "tales", "telling", "in", "a"],
-          condition: (j) => j.length > 100
+          description:
+            "A joke that takes its time to build to the perfect punchline.",
+          words: ["tale", "tales", "telling", "story", "narrative"],
+          condition: (j) => j.length > 80 && j.length <= 120
         },
         {
-          id: "punctuation",
-          name: "Punctuation Punch",
+          id: "epic_joke",
+          name: "Epic Saga",
+          rarity: "Rare",
+          ep: 1500,
+          color: "#3b82f6",
+          description: "An epic tale worthy of Homer himself.",
+          words: ["epic", "epics", "legendary", "saga", "mythic"],
+          condition: (j) => j.length > 120
+        },
+        {
+          id: "exclamation",
+          name: "Loud & Clear",
           rarity: "Common",
-          ep: 100,
+          ep: 200,
           color: "#9ca3af",
-          words: ["bang", "bangs", "banging", "is", "to"],
+          description: "This joke doesn't whisper - it shouts!",
+          words: ["loud", "louder", "loudest", "shout", "yell"],
           condition: (j) => j.includes("!")
         },
         {
-          id: "questionable",
-          name: "Questionable",
+          id: "question",
+          name: "Curious Mind",
           rarity: "Common",
-          ep: 100,
+          ep: 200,
           color: "#9ca3af",
-          words: ["why", "whys", "wondering", "be", "for"],
+          description:
+            "A joke that leaves you wondering and questioning everything.",
+          words: ["curious", "curiosity", "wonder", "wondering", "asking"],
           condition: (j) => j.includes("?")
         },
         {
-          id: "double_trouble",
+          id: "comma_heavy",
+          name: "Pause Master",
+          rarity: "Uncommon",
+          ep: 500,
+          color: "#22c55e",
+          description: "So many pauses, it's practically a meditation.",
+          words: ["pause", "pauses", "pausing", "break", "rest"],
+          condition: (j) => (j.match(/,/g) || []).length >= 3
+        },
+        {
+          id: "no_punctuation",
+          name: "Raw Format",
+          rarity: "Rare",
+          ep: 1200,
+          color: "#3b82f6",
+          description: "No periods, no questions, just pure unfiltered comedy.",
+          words: ["raw", "rawer", "rawest", "pure", "untouched"],
+          condition: (j) => !/[.!?]/.test(j)
+        },
+        {
+          id: "few_words",
+          name: "Minimalist",
+          rarity: "Common",
+          ep: 350,
+          color: "#9ca3af",
+          description: "Less is more when every word counts.",
+          words: ["minimal", "minimalist", "sparse", "few", "little"],
+          condition: (j) => j.split(" ").length < 10
+        },
+        {
+          id: "many_words",
+          name: "Wordy",
+          rarity: "Uncommon",
+          ep: 550,
+          color: "#22c55e",
+          description: "A verbose masterpiece that never runs out of words.",
+          words: ["wordy", "verbose", "lengthy", "many", "plenty"],
+          condition: (j) => j.split(" ").length > 15
+        },
+        {
+          id: "yo_mama_x2",
           name: "Double Trouble",
           rarity: "Epic",
-          ep: 10000,
+          ep: 8000,
           color: "#a855f7",
-          words: ["echo", "echoes", "echoing", "with", "on"],
+          description:
+            'Two "Yo Mama" references in one joke? That\'s twice the fun!',
+          words: ["double", "doubles", "doubling", "twice", "twin"],
           condition: (j) =>
             (j.toLowerCase().match(/yo mama/g) || []).length >= 2
+        },
+        {
+          id: "yo_mama_x3",
+          name: "Triple Threat",
+          rarity: "Mythic",
+          ep: 25000,
+          color: "#fbbf24",
+          description:
+            'Three "Yo Mama" references - the holy trinity of roasts.',
+          words: ["triple", "triples", "trippling", "thrice", "third"],
+          condition: (j) =>
+            (j.toLowerCase().match(/yo mama/g) || []).length >= 3
+        },
+        {
+          id: "food_mention",
+          name: "Foodie",
+          rarity: "Uncommon",
+          ep: 500,
+          color: "#22c55e",
+          description: "When food becomes the punchline itself.",
+          words: ["food", "foods", "eating", "meal", "feast"],
+          condition: (j) =>
+            /eat|food|meal|hungry|pizza|burger|fries|chicken|rice|bread/i.test(
+              j
+            )
+        },
+        {
+          id: "fast_food",
+          name: "Fast Food Fan",
+          rarity: "Uncommon",
+          ep: 600,
+          color: "#22c55e",
+          description: "A love letter to drive-thrus and greasy goodness.",
+          words: ["fast", "faster", "fastest", "quick", "speedy"],
+          condition: (j) =>
+            /mcdonalds|kfc|burger king|taco bell|wendys|pizza hut/i.test(j)
+        },
+        {
+          id: "tech_mention",
+          name: "Tech Savvy",
+          rarity: "Rare",
+          ep: 1500,
+          color: "#3b82f6",
+          description: "When modern technology meets ancient comedy.",
+          words: ["tech", "techy", "digital", "cyber", "online"],
+          condition: (j) =>
+            /google|twitter|facebook|instagram|tiktok|youtube|internet|computer|phone|app/i.test(
+              j
+            )
+        },
+        {
+          id: "social_media",
+          name: "Social Butterfly",
+          rarity: "Uncommon",
+          ep: 650,
+          color: "#22c55e",
+          description: "Scrolling through the social feeds of comedy.",
+          words: ["social", "socially", "connected", "linked", "networked"],
+          condition: (j) =>
+            /facebook|instagram|twitter|tiktok|snapchat|social media/i.test(j)
+        },
+        {
+          id: "money_mention",
+          name: "Money Talks",
+          rarity: "Uncommon",
+          ep: 600,
+          color: "#22c55e",
+          description: "When the punchline is all about the benjamins.",
+          words: ["money", "moneys", "cash", "funds", "wealth"],
+          condition: (j) =>
+            /money|cash|dollar|cent|coin|bill|bank|rich|poor|broke/i.test(j)
+        },
+        {
+          id: "stock_market",
+          name: "Wall Street",
+          rarity: "Rare",
+          ep: 1800,
+          color: "#3b82f6",
+          description: "When jokes cause market fluctuations.",
+          words: ["stock", "stocks", "trading", "market", "invest"],
+          condition: (j) => /stock|market|trading|invest|wall street/i.test(j)
+        },
+        {
+          id: "animal_mention",
+          name: "Animal Lover",
+          rarity: "Uncommon",
+          ep: 550,
+          color: "#22c55e",
+          description: "When the animal kingdom gets roasted.",
+          words: ["animal", "animals", "beast", "creature", "wild"],
+          condition: (j) =>
+            /dog|cat|duck|bird|fish|cow|pig|horse|chicken/i.test(j)
+        },
+        {
+          id: "sea_creature",
+          name: "Deep Sea",
+          rarity: "Rare",
+          ep: 1400,
+          color: "#3b82f6",
+          description: "Diving deep into oceanic comedy.",
+          words: ["sea", "seas", "ocean", "deep", "marine"],
+          condition: (j) => /fish|whale|shark|ocean|sea|water|swim/i.test(j)
+        },
+        {
+          id: "house_mention",
+          name: "Homebody",
+          rarity: "Common",
+          ep: 400,
+          color: "#9ca3af",
+          description: "When home sweet home becomes the punchline.",
+          words: ["home", "homes", "house", "household", "dwelling"],
+          condition: (j) => /house|home|room|bed|kitchen|bathroom/i.test(j)
+        },
+        {
+          id: "outdoor_mention",
+          name: "Nature Lover",
+          rarity: "Uncommon",
+          ep: 550,
+          color: "#22c55e",
+          description: "Taking comedy outdoors into the great unknown.",
+          words: ["nature", "natural", "outdoor", "outside", "wild"],
+          condition: (j) =>
+            /beach|park|forest|mountain|tree|grass|field/i.test(j)
+        },
+        {
+          id: "city_mention",
+          name: "City Slicker",
+          rarity: "Uncommon",
+          ep: 600,
+          color: "#22c55e",
+          description: "Urban legends and metropolitan mishaps.",
+          words: ["city", "cities", "urban", "town", "metro"],
+          condition: (j) =>
+            /city|town|street|avenue|road|building|skyscraper/i.test(j)
+        },
+        {
+          id: "time_mention",
+          name: "Time Keeper",
+          rarity: "Uncommon",
+          ep: 600,
+          color: "#22c55e",
+          description: "When time itself becomes the joke.",
+          words: ["time", "times", "clock", "hour", "minute"],
+          condition: (j) =>
+            /time|clock|watch|hour|minute|second|day|night|morning|evening/i.test(
+              j
+            )
+        },
+        {
+          id: "past_mention",
+          name: "History Buff",
+          rarity: "Rare",
+          ep: 1300,
+          color: "#3b82f6",
+          description: "Digging up jokes from the annals of history.",
+          words: ["past", "history", "historic", "ancient", "old"],
+          condition: (j) =>
+            /was|were|had|did|used to|back then|in the past/i.test(j)
+        },
+        {
+          id: "future_mention",
+          name: "Future Thinker",
+          rarity: "Rare",
+          ep: 1300,
+          color: "#3b82f6",
+          description: "Jokes from tomorrow, delivered today.",
+          words: ["future", "futuristic", "tomorrow", "ahead", "next"],
+          condition: (j) => /will|going to|shall|future|tomorrow|next/i.test(j)
+        },
+        {
+          id: "color_mention",
+          name: "Colorful",
+          rarity: "Common",
+          ep: 350,
+          color: "#9ca3af",
+          description: "A joke painted in vivid hues.",
+          words: ["color", "colors", "colorful", "hue", "shade"],
+          condition: (j) =>
+            /red|blue|green|yellow|black|white|orange|purple|pink|brown/i.test(
+              j
+            )
+        },
+        {
+          id: "dark_color",
+          name: "Dark Side",
+          rarity: "Uncommon",
+          ep: 500,
+          color: "#22c55e",
+          description: "When the joke ventures into the shadows.",
+          words: ["dark", "darker", "darkest", "shadow", "black"],
+          condition: (j) => /black|dark|shadow|night|dim/i.test(j)
+        },
+        {
+          id: "bright_color",
+          name: "Bright Side",
+          rarity: "Uncommon",
+          ep: 500,
+          color: "#22c55e",
+          description: "A joke that shines like the sun.",
+          words: ["bright", "brighter", "brightest", "light", "shine"],
+          condition: (j) => /yellow|white|bright|light|shine|glow/i.test(j)
+        },
+        {
+          id: "sad_mention",
+          name: "Tearjerker",
+          rarity: "Uncommon",
+          ep: 550,
+          color: "#22c55e",
+          description: "So funny it makes you cry... or maybe just sad.",
+          words: ["sad", "sadder", "saddest", "cry", "tears"],
+          condition: (j) => /cry|sad|tears|unhappy|depressed|miserable/i.test(j)
+        },
+        {
+          id: "happy_mention",
+          name: "Joy Bringer",
+          rarity: "Uncommon",
+          ep: 550,
+          color: "#22c55e",
+          description: "A joke that spreads happiness wherever it goes.",
+          words: ["happy", "happier", "happiest", "joy", "smile"],
+          condition: (j) => /happy|joy|smile|laugh|glad|cheerful/i.test(j)
+        },
+        {
+          id: "angry_mention",
+          name: "Hot Head",
+          rarity: "Uncommon",
+          ep: 550,
+          color: "#22c55e",
+          description: "A joke that might make someone's blood boil.",
+          words: ["angry", "angrier", "angriest", "mad", "rage"],
+          condition: (j) => /angry|mad|furious|rage|upset|annoyed/i.test(j)
+        },
+        {
+          id: "movement_mention",
+          name: "On The Move",
+          rarity: "Uncommon",
+          ep: 600,
+          color: "#22c55e",
+          description: "When the joke is all about action and movement.",
+          words: ["move", "moves", "moving", "walk", "run"],
+          condition: (j) => /walk|run|jump|sit|stand|move|go|come/i.test(j)
+        },
+        {
+          id: "action_verb",
+          name: "Action Hero",
+          rarity: "Rare",
+          ep: 1400,
+          color: "#3b82f6",
+          description: "A joke packed with dynamic verbs and motion.",
+          words: ["action", "actions", "acting", "do", "did"],
+          condition: (j) => /jump|run|walk|sit|stand|climb|swim|fly/i.test(j)
+        },
+        {
+          id: "big_mention",
+          name: "Big Deal",
+          rarity: "Common",
+          ep: 400,
+          color: "#9ca3af",
+          description: "When size matters in comedy.",
+          words: ["big", "bigger", "biggest", "large", "huge"],
+          condition: (j) => /big|large|huge|giant|massive|enormous/i.test(j)
+        },
+        {
+          id: "small_mention",
+          name: "Small Fry",
+          rarity: "Common",
+          ep: 400,
+          color: "#9ca3af",
+          description: "Tiny jokes for tiny moments.",
+          words: ["small", "smaller", "smallest", "tiny", "little"],
+          condition: (j) => /small|tiny|little|mini|micro/i.test(j)
+        },
+        {
+          id: "fast_mention",
+          name: "Speed Demon",
+          rarity: "Uncommon",
+          ep: 600,
+          color: "#22c55e",
+          description: "A joke that moves at lightning speed.",
+          words: ["fast", "faster", "fastest", "quick", "speedy"],
+          condition: (j) => /fast|quick|speed|rapid|swift|hurry/i.test(j)
+        },
+        {
+          id: "slow_mention",
+          name: "Slow & Steady",
+          rarity: "Uncommon",
+          ep: 600,
+          color: "#22c55e",
+          description: "A joke that takes its sweet time.",
+          words: ["slow", "slower", "slowest", "gradual", "steady"],
+          condition: (j) => /slow|gradual|steady|patient|wait/i.test(j)
+        },
+        {
+          id: "weather_mention",
+          name: "Weather Watcher",
+          rarity: "Uncommon",
+          ep: 550,
+          color: "#22c55e",
+          description: "When the weather forecast includes punchlines.",
+          words: ["weather", "weathers", "climate", "forecast", "sky"],
+          condition: (j) => /rain|sun|snow|wind|storm|cloud|weather/i.test(j)
+        },
+        {
+          id: "rain_mention",
+          name: "Rainy Day",
+          rarity: "Common",
+          ep: 450,
+          color: "#9ca3af",
+          description: "A joke perfect for gloomy weather.",
+          words: ["rain", "rains", "raining", "rainy", "wet"],
+          condition: (j) => /rain|wet|storm|thunder|lightning/i.test(j)
+        },
+        {
+          id: "family_mention",
+          name: "Family First",
+          rarity: "Common",
+          ep: 400,
+          color: "#9ca3af",
+          description: "When family ties become the comedy foundation.",
+          words: ["family", "families", "kin", "relative", "relation"],
+          condition: (j) =>
+            /mom|dad|brother|sister|family|parent|child/i.test(j)
+        },
+        {
+          id: "friend_mention",
+          name: "Friend Zone",
+          rarity: "Common",
+          ep: 400,
+          color: "#9ca3af",
+          description: "When friendship meets comedic roasting.",
+          words: ["friend", "friends", "friendly", "buddy", "pal"],
+          condition: (j) => /friend|buddy|pal|mate|companion/i.test(j)
+        },
+        {
+          id: "music_mention",
+          name: "Music Lover",
+          rarity: "Uncommon",
+          ep: 600,
+          color: "#22c55e",
+          description: "A joke that hits all the right notes.",
+          words: ["music", "musical", "song", "tune", "melody"],
+          condition: (j) => /music|song|sing|dance|band|concert|album/i.test(j)
+        },
+        {
+          id: "artist_mention",
+          name: "Star Struck",
+          rarity: "Rare",
+          ep: 1500,
+          color: "#3b82f6",
+          description: "When celebrities become the butt of the joke.",
+          words: ["star", "stars", "celebrity", "famous", "icon"],
+          condition: (j) =>
+            /50 cent|beyonce|taylor swift|drake|kanye|celebrity|famous/i.test(j)
+        },
+        {
+          id: "sports_mention",
+          name: "Sports Fan",
+          rarity: "Uncommon",
+          ep: 600,
+          color: "#22c55e",
+          description: "A joke that scores in the comedy league.",
+          words: ["sport", "sports", "game", "play", "team"],
+          condition: (j) =>
+            /football|basketball|baseball|soccer|tennis|sport|game/i.test(j)
+        },
+        {
+          id: "nba_mention",
+          name: "Court Vision",
+          rarity: "Rare",
+          ep: 1400,
+          color: "#3b82f6",
+          description: "When basketball meets comedic brilliance.",
+          words: ["court", "courts", "basketball", "hoop", "ball"],
+          condition: (j) => /basketball|nba|lakers|bulls|celtics|hoop/i.test(j)
+        },
+        {
+          id: "school_mention",
+          name: "Book Smart",
+          rarity: "Uncommon",
+          ep: 600,
+          color: "#22c55e",
+          description: "Educational comedy for the intellectually curious.",
+          words: ["school", "schools", "study", "learn", "education"],
+          condition: (j) =>
+            /school|class|teacher|student|study|learn|homework/i.test(j)
+        },
+        {
+          id: "college_mention",
+          name: "Higher Education",
+          rarity: "Rare",
+          ep: 1300,
+          color: "#3b82f6",
+          description: "When higher education meets lower comedy.",
+          words: ["college", "colleges", "university", "degree", "campus"],
+          condition: (j) =>
+            /college|university|degree|campus|professor/i.test(j)
+        },
+        {
+          id: "work_mention",
+          name: "Work Ethic",
+          rarity: "Uncommon",
+          ep: 600,
+          color: "#22c55e",
+          description: "A joke about the 9-to-5 grind.",
+          words: ["work", "works", "working", "job", "career"],
+          condition: (j) => /work|job|career|office|boss|employee/i.test(j)
+        },
+        {
+          id: "unemployed",
+          name: "Between Jobs",
+          rarity: "Rare",
+          ep: 1200,
+          color: "#3b82f6",
+          description: "When unemployment becomes the punchline.",
+          words: ["unemployed", "jobless", "idle", "free", "available"],
+          condition: (j) => /unemployed|jobless|no work|without a job/i.test(j)
+        },
+        {
+          id: "car_mention",
+          name: "Road Tripper",
+          rarity: "Uncommon",
+          ep: 600,
+          color: "#22c55e",
+          description: "A joke that takes you on a comedic road trip.",
+          words: ["car", "cars", "drive", "vehicle", "auto"],
+          condition: (j) => /car|drive|vehicle|truck|bus|auto/i.test(j)
+        },
+        {
+          id: "public_transport",
+          name: "Public Transit",
+          rarity: "Rare",
+          ep: 1300,
+          color: "#3b82f6",
+          description: "When public transportation becomes public comedy.",
+          words: ["transit", "transit", "public", "bus", "train"],
+          condition: (j) => /bus|train|subway|metro|public transport/i.test(j)
+        },
+        {
+          id: "clothing_mention",
+          name: "Fashion Forward",
+          rarity: "Uncommon",
+          ep: 550,
+          color: "#22c55e",
+          description: "A joke dressed to impress.",
+          words: ["clothes", "clothing", "fashion", "wear", "outfit"],
+          condition: (j) =>
+            /shirt|pants|dress|shoes|hat|coat|jacket|clothes/i.test(j)
+        },
+        {
+          id: "ugly_clothes",
+          name: "Fashion Disaster",
+          rarity: "Rare",
+          ep: 1400,
+          color: "#3b82f6",
+          description: "When fashion choices become comedic gold.",
+          words: ["fashion", "fashionable", "style", "trend", "look"],
+          condition: (j) => /ugly|hideous|fashion disaster|bad style/i.test(j)
+        },
+        {
+          id: "smart_mention",
+          name: "Bright Mind",
+          rarity: "Uncommon",
+          ep: 600,
+          color: "#22c55e",
+          description: "A joke that celebrates intelligence.",
+          words: ["smart", "smarter", "smartest", "intelligent", "clever"],
+          condition: (j) => /smart|intelligent|clever|genius|brainy/i.test(j)
+        },
+        {
+          id: "dumb_mention",
+          name: "Not The Sharpest",
+          rarity: "Rare",
+          ep: 1500,
+          color: "#3b82f6",
+          description: "When dullness becomes the comedy weapon.",
+          words: ["dumb", "dumber", "dumbest", "stupid", "foolish"],
+          condition: (j) => /dumb|stupid|fool|idiot|moron/i.test(j)
+        },
+        {
+          id: "old_mention",
+          name: "Old Soul",
+          rarity: "Uncommon",
+          ep: 550,
+          color: "#22c55e",
+          description: "A joke with ancient comedic wisdom.",
+          words: ["old", "older", "oldest", "ancient", "elderly"],
+          condition: (j) => /old|ancient|elderly|aged|senior/i.test(j)
+        },
+        {
+          id: "young_mention",
+          name: "Young Blood",
+          rarity: "Uncommon",
+          ep: 550,
+          color: "#22c55e",
+          description: "Fresh comedy for the young at heart.",
+          words: ["young", "younger", "youngest", "youth", "fresh"],
+          condition: (j) => /young|youth|teen|kid|child/i.test(j)
+        },
+        {
+          id: "alliteration",
+          name: "Alliteration Ace",
+          rarity: "Epic",
+          ep: 7000,
+          color: "#a855f7",
+          description:
+            "When words starting with the same sound create comedic magic.",
+          words: [
+            "alliteration",
+            "alliterations",
+            "alliterative",
+            "repeat",
+            "repeating"
+          ],
+          condition: (j) => /\b([a-zA-Z])\w*\s+\1\w*/i.test(j)
+        },
+        {
+          id: "rhyme",
+          name: "Rhyme Time",
+          rarity: "Epic",
+          ep: 8000,
+          color: "#a855f7",
+          description: "When the joke rhymes, it's prime time.",
+          words: ["rhyme", "rhymes", "rhyming", "poetic", "verse"],
+          condition: (j) => /\b(\w{3,})\s+\w*\1\b/i.test(j)
+        },
+        {
+          id: "palindrome_word",
+          name: "Palindrome Pro",
+          rarity: "Legendary",
+          ep: 50000,
+          color: "#ef4444",
+          description:
+            "When words read the same forwards and backwards, comedy flows both ways.",
+          words: [
+            "palindrome",
+            "palindromes",
+            "palindromic",
+            "mirror",
+            "reversed"
+          ],
+          condition: (j) => /\b(level|radar|madam|kayak|racecar)\b/i.test(j)
         },
         {
           id: "daily_viewer",
@@ -678,269 +1371,40 @@
           rarity: "Common",
           ep: 100,
           color: "#9ca3af",
-          words: ["daily", "dailies", "day", "from", "by"],
+          description: "You showed up today. That's worth celebrating.",
+          words: ["daily", "dailies", "day", "today", "routine"],
           condition: (j) => true
         },
         {
-          id: "perfect_roast",
-          name: "The Perfect Roast",
+          id: "perfect_day",
+          name: "Perfect Day",
           rarity: "Mythic",
-          ep: 50000,
+          ep: 30000,
           color: "#fbbf24",
-          words: ["mythic", "myths", "mythical", "as", "at"],
-          condition: (j, badges) => badges.length >= 6
+          description:
+            "When everything aligns and the joke is absolutely perfect.",
+          words: ["perfect", "perfection", "perfectly", "ideal", "flawless"],
+          condition: (j, badges) => badges.length >= 8
         },
         {
-          id: "vowel_void",
-          name: "Vowel Void",
-          rarity: "Rare",
-          ep: 1500,
-          color: "#3b82f6",
-          words: ["vowel", "vowels", "vocalizing", "or", "an"],
-          condition: (j) => (j.match(/[aeiou]/gi) || []).length > 30
-        },
-        {
-          id: "consonant_clash",
-          name: "Consonant Clash",
-          rarity: "Rare",
-          ep: 1500,
-          color: "#3b82f6",
-          words: ["clash", "clashes", "clashing", "but", "not"],
-          condition: (j) => (j.match(/[^aeiou\s]/gi) || []).length > 40
-        },
-        {
-          id: "alliteration_ace",
-          name: "Alliteration Ace",
+          id: "badge_collector",
+          name: "Badge Collector",
           rarity: "Epic",
-          ep: 8000,
+          ep: 10000,
           color: "#a855f7",
-          words: ["alliance", "alliances", "aligning", "so", "if"],
-          condition: (j) => /\b([a-zA-Z])\w*\s+\1\w*/i.test(j)
+          description: "Collecting badges like Pokémon.",
+          words: ["collect", "collects", "collecting", "gather", "accumulate"],
+          condition: (j, badges) => badges.length >= 5
         },
         {
-          id: "word_wizard",
-          name: "Word Wizard",
-          rarity: "Epic",
-          ep: 8000,
-          color: "#a855f7",
-          words: ["spell", "spells", "casting", "was", "are"],
-          condition: (j) => j.split(" ").length > 15
-        },
-        {
-          id: "laugh_track",
-          name: "Laugh Track",
-          rarity: "Uncommon",
-          ep: 750,
-          color: "#22c55e",
-          words: ["laugh", "laughs", "laughing", "we", "you"],
-          condition: (j) =>
-            j.toLowerCase().includes("laugh") || j.toLowerCase().includes("lol")
-        },
-        {
-          id: "wall_street",
-          name: "Wall Street",
-          rarity: "Rare",
-          ep: 2500,
-          color: "#3b82f6",
-          words: ["market", "markets", "trading", "up", "down"],
-          condition: (j) =>
-            j.toLowerCase().includes("stock") ||
-            j.toLowerCase().includes("market") ||
-            j.toLowerCase().includes("money")
-        },
-        {
-          id: "foodie",
-          name: "The Foodie",
-          rarity: "Uncommon",
-          ep: 600,
-          color: "#22c55e",
-          words: ["feast", "feasts", "feasting", "eat", "eat"],
-          condition: (j) =>
-            j.toLowerCase().includes("eat") ||
-            j.toLowerCase().includes("food") ||
-            j.toLowerCase().includes("meal") ||
-            j.toLowerCase().includes("hungry")
-        },
-        {
-          id: "tech_savvy",
-          name: "Tech Savvy",
-          rarity: "Rare",
-          ep: 2000,
-          color: "#3b82f6",
-          words: ["tech", "techs", "coding", "net", "web"],
-          condition: (j) =>
-            j.toLowerCase().includes("google") ||
-            j.toLowerCase().includes("twitter") ||
-            j.toLowerCase().includes("app") ||
-            j.toLowerCase().includes("internet")
-        },
-        {
-          id: "animal_lover",
-          name: "Animal Lover",
-          rarity: "Uncommon",
-          ep: 700,
-          color: "#22c55e",
-          words: ["beast", "beasts", "roaming", "run", "ran"],
-          condition: (j) =>
-            j.toLowerCase().includes("duck") ||
-            j.toLowerCase().includes("dog") ||
-            j.toLowerCase().includes("cat") ||
-            j.toLowerCase().includes("animal")
-        },
-        {
-          id: "family_ties",
-          name: "Family Ties",
-          rarity: "Common",
-          ep: 300,
-          color: "#9ca3af",
-          words: ["kin", "kins", "relating", "her", "his"],
-          condition: (j) =>
-            j.toLowerCase().includes("dad") ||
-            j.toLowerCase().includes("mom") ||
-            j.toLowerCase().includes("brother") ||
-            j.toLowerCase().includes("sister")
-        },
-        {
-          id: "time_traveler",
-          name: "Time Traveler",
-          rarity: "Epic",
-          ep: 9000,
-          color: "#a855f7",
-          words: ["time", "times", "timing", "now", "then"],
-          condition: (j) =>
-            j.toLowerCase().includes("time") ||
-            j.toLowerCase().includes("clock") ||
-            j.toLowerCase().includes("watch")
-        },
-        {
-          id: "mirror_image",
-          name: "Mirror Image",
-          rarity: "Rare",
-          ep: 2200,
-          color: "#3b82f6",
-          words: ["mirror", "mirrors", "reflecting", "see", "saw"],
-          condition: (j) =>
-            j.toLowerCase().includes("look") ||
-            j.toLowerCase().includes("see") ||
-            j.toLowerCase().includes("mirror")
-        },
-        {
-          id: "number_nerd",
-          name: "Number Nerd",
-          rarity: "Uncommon",
-          ep: 650,
-          color: "#22c55e",
-          words: ["count", "counts", "counting", "one", "two"],
-          condition: (j) => /\d+/.test(j)
-        },
-        {
-          id: "space_explorer",
-          name: "Space Explorer",
-          rarity: "Rare",
-          ep: 1800,
-          color: "#3b82f6",
-          words: ["space", "spaces", "spacing", "far", "near"],
-          condition: (j) =>
-            j.toLowerCase().includes("earth") ||
-            j.toLowerCase().includes("space") ||
-            j.toLowerCase().includes("star")
-        },
-        {
-          id: "music_maker",
-          name: "Music Maker",
-          rarity: "Uncommon",
-          ep: 700,
-          color: "#22c55e",
-          words: ["tune", "tunes", "tuning", "sing", "sang"],
-          condition: (j) =>
-            j.toLowerCase().includes("cent") ||
-            j.toLowerCase().includes("music") ||
-            j.toLowerCase().includes("song")
-        },
-        {
-          id: "color_coordinator",
-          name: "Color Coordinator",
-          rarity: "Common",
-          ep: 400,
-          color: "#9ca3af",
-          words: ["hue", "hues", "huing", "red", "blue"],
-          condition: (j) => /red|blue|green|yellow|black|white/i.test(j)
-        },
-        {
-          id: "speed_demon",
-          name: "Speed Demon",
-          rarity: "Rare",
-          ep: 1600,
-          color: "#3b82f6",
-          words: ["fast", "faster", "fasting", "quick", "slow"],
-          condition: (j) =>
-            j.toLowerCase().includes("fast") ||
-            j.toLowerCase().includes("quick") ||
-            j.toLowerCase().includes("speed")
-        },
-        {
-          id: "size_matters",
-          name: "Size Matters",
-          rarity: "Uncommon",
-          ep: 550,
-          color: "#22c55e",
-          words: ["big", "bigger", "biggest", "small", "tiny"],
-          condition: (j) =>
-            j.toLowerCase().includes("big") ||
-            j.toLowerCase().includes("small") ||
-            j.toLowerCase().includes("huge") ||
-            j.toLowerCase().includes("tiny")
-        },
-        {
-          id: "weather_watcher",
-          name: "Weather Watcher",
-          rarity: "Common",
-          ep: 350,
-          color: "#9ca3af",
-          words: ["rain", "rains", "raining", "sun", "snow"],
-          condition: (j) =>
-            j.toLowerCase().includes("rain") ||
-            j.toLowerCase().includes("sun") ||
-            j.toLowerCase().includes("weather")
-        },
-        {
-          id: "location_legend",
-          name: "Location Legend",
-          rarity: "Uncommon",
-          ep: 600,
-          color: "#22c55e",
-          words: ["place", "places", "placing", "here", "there"],
-          condition: (j) =>
-            j.toLowerCase().includes("house") ||
-            j.toLowerCase().includes("beach") ||
-            j.toLowerCase().includes("bank") ||
-            j.toLowerCase().includes("store")
-        },
-        {
-          id: "emotion_engine",
-          name: "Emotion Engine",
-          rarity: "Rare",
-          ep: 1400,
-          color: "#3b82f6",
-          words: ["feel", "feels", "feeling", "cry", "cried"],
-          condition: (j) =>
-            j.toLowerCase().includes("cry") ||
-            j.toLowerCase().includes("sad") ||
-            j.toLowerCase().includes("happy") ||
-            j.toLowerCase().includes("mad")
-        },
-        {
-          id: "action_hero",
-          name: "Action Hero",
-          rarity: "Epic",
-          ep: 7500,
-          color: "#a855f7",
-          words: ["act", "acts", "acting", "do", "did"],
-          condition: (j) =>
-            j.toLowerCase().includes("jump") ||
-            j.toLowerCase().includes("run") ||
-            j.toLowerCase().includes("walk") ||
-            j.toLowerCase().includes("sit")
+          id: "ep_master",
+          name: "EP Master",
+          rarity: "Legendary",
+          ep: 100000,
+          color: "#ef4444",
+          description: "When your EP count reaches legendary status.",
+          words: ["master", "masters", "mastering", "expert", "pro"],
+          condition: (j, badges, ep) => ep >= 50000
         }
       ];
 
@@ -948,7 +1412,7 @@
       let ep = 0;
 
       badgeDefinitions.forEach((def) => {
-        if (def.condition(dailyJoke, unlockedBadges)) {
+        if (def.condition(dailyJoke, unlockedBadges, ep)) {
           unlockedBadges.push(def);
           ep += def.ep;
         }
@@ -960,7 +1424,15 @@
         el.className = "badge";
         el.style.borderColor = badge.color + "40";
         el.style.color = badge.color;
-        el.innerHTML = `<span class="rarity-dot" style="background: ${badge.color}"></span>${badge.name}`;
+        el.innerHTML = `
+      <span class="rarity-dot" style="background: ${badge.color}"></span>
+      ${badge.name}
+      <div class="badge-tooltip">
+        <div class="tooltip-title" style="color: ${badge.color}">${badge.name}</div>
+        <div class="tooltip-description">${badge.description}</div>
+        <div class="tooltip-ep">+${badge.ep.toLocaleString()} EP</div>
+      </div>
+    `;
         badgeGrid.appendChild(el);
       });
 
@@ -994,18 +1466,14 @@
           return;
         }
 
-        // Create poem using ONLY the selected words
-        // Arrange in poetic patterns
         const lines = [];
         let wordIndex = 0;
 
-        // Line 1: 3 words
         if (words.length >= 3) {
           lines.push(`${words[0]} ${words[1]} ${words[2]}`);
           wordIndex = 3;
         }
 
-        // Line 2: 3 words
         if (words.length >= wordIndex + 3) {
           lines.push(
             `${words[wordIndex]} ${words[wordIndex + 1]} ${words[wordIndex + 2]}`
@@ -1013,7 +1481,6 @@
           wordIndex += 3;
         }
 
-        // Line 3: 3 words
         if (words.length >= wordIndex + 3) {
           lines.push(
             `${words[wordIndex]} ${words[wordIndex + 1]} ${words[wordIndex + 2]}`
@@ -1021,7 +1488,6 @@
           wordIndex += 3;
         }
 
-        // Line 4: remaining words
         if (words.length > wordIndex) {
           const remaining = words.slice(wordIndex);
           lines.push(remaining.join(" "));
