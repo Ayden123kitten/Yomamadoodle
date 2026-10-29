@@ -726,6 +726,10 @@
         };
       }
 
+      let poemWords = [];
+      let unlockedBadges = [];
+      let ep = 0;
+
       const todayStr = new Date().toDateString();
       let seed = 0;
       for (let i = 0; i < todayStr.length; i++) {
@@ -1548,6 +1552,91 @@
         }
       ];
 
+      function evaluateBadges(joke) {
+        unlockedBadges.length = 0;
+        ep = 0;
+
+        badgeDefinitions.forEach((def) => {
+          if (def.condition(joke, unlockedBadges, ep)) {
+            unlockedBadges.push(def);
+            ep += def.ep;
+          }
+        });
+
+        // Render badges
+        const badgeGrid = document.getElementById("badgeGrid");
+        badgeGrid.innerHTML = "";
+        unlockedBadges.forEach((badge) => {
+          const el = document.createElement("div");
+          el.className = "badge";
+          el.style.borderColor = badge.color + "40";
+          el.style.color = badge.color;
+          el.innerHTML = `
+        <span class="rarity-dot" style="background: ${badge.color}"></span>
+        ${badge.name}
+        <div class="badge-tooltip">
+          <div class="tooltip-title" style="color: ${badge.color}">${badge.name}</div>
+          <div class="tooltip-description">${badge.description}</div>
+          <div class="tooltip-ep">+${badge.ep.toLocaleString()} EP</div>
+        </div>
+      `;
+          badgeGrid.appendChild(el);
+        });
+
+        // Render word buttons
+        const wordGrid = document.getElementById("wordGrid");
+        wordGrid.innerHTML = "";
+        unlockedBadges.forEach((badge) => {
+          const btn = document.createElement("button");
+          btn.className = "word-btn";
+          btn.style.borderColor = badge.color + "40";
+          btn.style.color = badge.color;
+          btn.textContent = badge.words[0];
+          btn.dataset.words = JSON.stringify(badge.words);
+          btn.dataset.currentIndex = "0";
+
+          btn.addEventListener("click", () => {
+            const words = JSON.parse(btn.dataset.words);
+            let currentIndex = parseInt(btn.dataset.currentIndex);
+            currentIndex = (currentIndex + 1) % words.length;
+            btn.dataset.currentIndex = currentIndex;
+            btn.textContent = words[currentIndex];
+
+            poemWords.push(words[currentIndex]);
+            updatePoemPreview();
+
+            btn.style.transform = "scale(0.95)";
+            setTimeout(() => (btn.style.transform = ""), 100);
+          });
+
+          wordGrid.appendChild(btn);
+        });
+
+        // Update EP display
+        document.getElementById("epValue").textContent = ep.toLocaleString();
+
+        const rarityOrder = ["Mythic", "Epic", "Rare", "Uncommon", "Common"];
+        let todayHighestRarity = "Common";
+        for (const r of rarityOrder) {
+          if (unlockedBadges.some((b) => b.rarity === r)) {
+            todayHighestRarity = r;
+            break;
+          }
+        }
+
+        let topPercent = 50;
+        if (ep >= 50000) topPercent = 1;
+        else if (ep >= 10000) topPercent = 5;
+        else if (ep >= 5000) topPercent = 10;
+        else if (ep >= 2000) topPercent = 25;
+
+        const rarityColor =
+          unlockedBadges.find((b) => b.rarity === todayHighestRarity)?.color ||
+          "#9ca3af";
+        document.getElementById("epRarity").innerHTML =
+          `<span style="color: ${rarityColor}">●</span> ${todayHighestRarity.toUpperCase()} • Top ${topPercent}%`;
+      }
+
       const unlockedBadges = [];
       let ep = 0;
 
@@ -1575,50 +1664,6 @@
     `;
         badgeGrid.appendChild(el);
       });
-
-      // --- 4. Poem Builder System (Button-based) ---
-      const wordGrid = document.getElementById("wordGrid");
-      const poemPreview = document.getElementById("poemPreview");
-      let poemWords = [];
-
-      unlockedBadges.forEach((badge) => {
-        const btn = document.createElement("button");
-        btn.className = "word-btn";
-        btn.style.borderColor = badge.color + "40";
-        btn.style.color = badge.color;
-        btn.textContent = badge.words[0];
-        btn.dataset.words = JSON.stringify(badge.words);
-        btn.dataset.currentIndex = "0";
-
-        btn.addEventListener("click", () => {
-          // Cycle through word forms
-          const words = JSON.parse(btn.dataset.words);
-          let currentIndex = parseInt(btn.dataset.currentIndex);
-          currentIndex = (currentIndex + 1) % words.length;
-          btn.dataset.currentIndex = currentIndex;
-          btn.textContent = words[currentIndex];
-
-          // Add to poem
-          poemWords.push(words[currentIndex]);
-          updatePoemPreview();
-
-          // Button animation
-          btn.style.transform = "scale(0.95)";
-          setTimeout(() => (btn.style.transform = ""), 100);
-        });
-
-        wordGrid.appendChild(btn);
-      });
-
-      function updatePoemPreview() {
-        if (poemWords.length === 0) {
-          poemPreview.textContent = "Click buttons to build your poem...";
-          return;
-        }
-        poemPreview.textContent = poemWords.join(" ");
-      }
-
-      updatePoemPreview();
 
       // --- 5. Copy Functionality ---
       function copyPoem() {
@@ -1776,6 +1821,46 @@ ${poemText}`;
             document.querySelector(".ep-display").classList.remove("rolling");
           }, 1000);
         }, 600);
+      }
+
+      // --- 8. Roll New Video Function ---
+      function rollNewVideo() {
+        const rollBtn = document.querySelector(".roll-btn");
+        rollBtn.classList.add("rolling");
+
+        poemWords = [];
+        updatePoemPreview();
+
+        const badgeGrid = document.getElementById("badgeGrid");
+        badgeGrid.innerHTML = "";
+
+        const wordGrid = document.getElementById("wordGrid");
+        wordGrid.innerHTML = "";
+
+        const newSeed = Math.random();
+        localStorage.setItem("yomamadoodle_user_seed", newSeed);
+
+        setTimeout(() => {
+          loadDailyVideo();
+          rollBtn.classList.remove("rolling");
+
+          badgeGrid.classList.add("rolling");
+          document.querySelector(".ep-display").classList.add("rolling");
+
+          setTimeout(() => {
+            badgeGrid.classList.remove("rolling");
+            document.querySelector(".ep-display").classList.remove("rolling");
+          }, 1000);
+        }, 600);
+      }
+
+      function updatePoemPreview() {
+        const poemPreview = document.getElementById("poemPreview");
+        if (poemWords.length === 0) {
+          poemPreview.textContent = "Click buttons to build your poem...";
+          return;
+        }
+        poemPreview.textContent = poemWords.join(" ");
       }
     </script>
   </body>
