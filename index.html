@@ -383,6 +383,28 @@
         border-color: #a855f7;
       }
 
+      .word-btn {
+        background: rgba(255, 255, 255, 0.05);
+        border: 1px solid rgba(255, 255, 255, 0.15);
+        color: var(--text-primary);
+        padding: 8px 16px;
+        border-radius: 8px;
+        font-size: 0.9rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.2s;
+      }
+
+      .word-btn:hover {
+        background: rgba(255, 255, 255, 0.1);
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+      }
+
+      .word-btn:active {
+        transform: scale(0.95);
+      }
+
       .poem-preview {
         background: rgba(0, 0, 0, 0.4);
         border: 1px dashed rgba(255, 255, 255, 0.1);
@@ -421,6 +443,83 @@
 
       .copy-btn:active {
         transform: translateY(0);
+      }
+
+      .roll-btn {
+        width: 100%;
+        padding: 14px;
+        background: linear-gradient(135deg, #22c55e, #16a34a);
+        border: none;
+        border-radius: 10px;
+        color: white;
+        font-weight: 700;
+        font-size: 1rem;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        margin-top: 12px;
+      }
+
+      .roll-btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 20px rgba(34, 197, 94, 0.4);
+      }
+
+      .roll-btn:active {
+        transform: translateY(0);
+      }
+
+      .roll-btn.rolling {
+        animation: rollAnimation 0.6s ease-in-out;
+      }
+
+      @keyframes rollAnimation {
+        0%,
+        100% {
+          transform: rotate(0deg) scale(1);
+        }
+        25% {
+          transform: rotate(-10deg) scale(1.05);
+        }
+        75% {
+          transform: rotate(10deg) scale(1.05);
+        }
+      }
+
+      .badge-grid.rolling {
+        animation: badgeRollAnimation 0.8s ease-out;
+      }
+
+      @keyframes badgeRollAnimation {
+        0% {
+          opacity: 0;
+          transform: translateY(20px);
+        }
+        100% {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+
+      .ep-display.rolling {
+        animation: epRollAnimation 1s ease-out;
+      }
+
+      @keyframes epRollAnimation {
+        0% {
+          transform: scale(0.8);
+          opacity: 0;
+        }
+        50% {
+          transform: scale(1.1);
+        }
+        100% {
+          transform: scale(1);
+          opacity: 1;
+        }
       }
 
       .stats-bar {
@@ -567,6 +666,21 @@
             </svg>
             Copy Poem & Stats
           </button>
+          <button class="roll-btn" onclick="rollNewVideo()">
+            <svg
+              width="16"
+              height="16"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              viewBox="0 0 24 24"
+            >
+              <path
+                d="M21 2v6h-6M3 12a9 9 0 0 1 15-6.7L21 8M3 22v-6h6M21 12a9 9 0 0 1-15 6.7L3 16"
+              />
+            </svg>
+            Roll New Video
+          </button>
         </div>
       </div>
 
@@ -620,49 +734,75 @@
       }
       const rng = mulberry32(seed);
 
-      // --- 2. Yo Mama Video Data with Timestamps ---
-      const videoData = [
-        {
-          id: "EvmzGCCoue0",
-          timestamp: 12,
-          joke: "Yo mama so stupid, she thought a quarterback was a refund."
-        },
-        {
-          id: "plaQmxzaEpI",
-          timestamp: 8,
-          joke: "Yo mama so fat, when she skips a meal, the stock market drops."
-        },
-        {
-          id: "cOlUB_W-Sig",
-          timestamp: 15,
-          joke: "Yo mama so ugly, she made an onion cry."
-        },
-        {
-          id: "2QxvFAiYDJs",
-          timestamp: 10,
-          joke: "Yo mama so poor, ducks throw bread at her."
-        },
-        {
-          id: "xvV1jl96bRE",
-          timestamp: 20,
-          joke: "Yo mama so fat, she has her own area code."
+      // --- 2. Load Daily Video from API ---
+      async function loadDailyVideo() {
+        try {
+          // Fetch from Vercel API
+          const response = await fetch("/api/joke");
+          const data = await response.json();
+
+          const dailyJoke = data.joke;
+          document.getElementById("dailyJoke").textContent =
+            `Transcript: "${dailyJoke}"`;
+
+          // Use a random video for this joke (different per user)
+          const userSeed =
+            localStorage.getItem("yomamadoodle_user_seed") || Math.random();
+          localStorage.setItem("yomamadoodle_user_seed", userSeed);
+
+          const combinedSeed =
+            parseFloat(userSeed) +
+            new Date()
+              .toDateString()
+              .split("")
+              .reduce((a, b) => a + b.charCodeAt(0), 0);
+          const userRng = mulberry32(Math.floor(combinedSeed * 1000));
+
+          const dailyVideoIndex = Math.floor(userRng() * videoData.length);
+          const dailyVideo = videoData[dailyVideoIndex];
+
+          // Store for play button
+          window.currentVideo = dailyVideo;
+
+          evaluateBadges(dailyJoke);
+        } catch (error) {
+          console.error("Failed to load joke, using fallback", error);
+          // Fallback to local data
+          const userSeed =
+            localStorage.getItem("yomamadoodle_user_seed") || Math.random();
+          localStorage.setItem("yomamadoodle_user_seed", userSeed);
+
+          const combinedSeed =
+            parseFloat(userSeed) +
+            new Date()
+              .toDateString()
+              .split("")
+              .reduce((a, b) => a + b.charCodeAt(0), 0);
+          const userRng = mulberry32(Math.floor(combinedSeed * 1000));
+
+          const dailyVideoIndex = Math.floor(userRng() * videoData.length);
+          const dailyVideo = videoData[dailyVideoIndex];
+
+          window.currentVideo = dailyVideo;
+          document.getElementById("dailyJoke").textContent =
+            `Transcript: "${dailyVideo.joke}"`;
+
+          evaluateBadges(dailyVideo.joke);
         }
-      ];
-
-      const dailyVideoIndex = Math.floor(rng() * videoData.length);
-      const dailyVideo = videoData[dailyVideoIndex];
-      const dailyJoke = dailyVideo.joke;
-
-      document.getElementById("dailyJoke").textContent =
-        `Transcript: "${dailyJoke}"`;
+      }
 
       const playButtonOverlay = document.getElementById("playButtonOverlay");
       const dailyVideoIframe = document.getElementById("dailyVideo");
 
       playButtonOverlay.addEventListener("click", () => {
-        dailyVideoIframe.src = `https://www.youtube-nocookie.com/embed/${dailyVideo.id}?rel=0&modestbranding=1&autoplay=1&start=${dailyVideo.timestamp}`;
-        playButtonOverlay.classList.add("hidden");
+        if (window.currentVideo) {
+          dailyVideoIframe.src = `https://www.youtube-nocookie.com/embed/${window.currentVideo.id}?rel=0&modestbranding=1&autoplay=1&start=${window.currentVideo.timestamp}`;
+          playButtonOverlay.classList.add("hidden");
+        }
       });
+
+      // Load on page load
+      loadDailyVideo();
 
       // --- 3. Expanded Badge System with Descriptions ---
       const badgeDefinitions = [
@@ -670,7 +810,7 @@
           id: "fat_joke",
           name: "Heavy Hitter",
           rarity: "Rare",
-          ep: 2000,
+          ep: 2147,
           color: "#3b82f6",
           description:
             "A classic fat joke that hits with the weight of a thousand pizzas.",
@@ -681,7 +821,7 @@
           id: "ugly_joke",
           name: "Ugly Truth",
           rarity: "Rare",
-          ep: 2000,
+          ep: 1893,
           color: "#3b82f6",
           description:
             "Sometimes the truth hurts, especially when it involves mirrors.",
@@ -692,7 +832,7 @@
           id: "stupid_joke",
           name: "Not So Bright",
           rarity: "Rare",
-          ep: 2000,
+          ep: 2567,
           color: "#3b82f6",
           description:
             "When intelligence takes a vacation and never comes back.",
@@ -703,7 +843,7 @@
           id: "poor_joke",
           name: "Broke Life",
           rarity: "Rare",
-          ep: 2000,
+          ep: 1734,
           color: "#3b82f6",
           description:
             "Financial struggles so severe, even pennies avoid them.",
@@ -714,7 +854,7 @@
           id: "short_joke",
           name: "Quick Wit",
           rarity: "Common",
-          ep: 300,
+          ep: 342,
           color: "#9ca3af",
           description: "Short, sweet, and straight to the punchline.",
           words: ["quick", "quicker", "quickest", "fast", "rapid"],
@@ -724,7 +864,7 @@
           id: "medium_joke",
           name: "Balanced",
           rarity: "Common",
-          ep: 400,
+          ep: 467,
           color: "#9ca3af",
           description: "The Goldilocks of jokes - not too long, not too short.",
           words: ["balanced", "balancing", "even", "steady", "middle"],
@@ -734,7 +874,7 @@
           id: "long_joke",
           name: "Storyteller",
           rarity: "Uncommon",
-          ep: 600,
+          ep: 689,
           color: "#22c55e",
           description:
             "A joke that takes its time to build to the perfect punchline.",
@@ -745,7 +885,7 @@
           id: "epic_joke",
           name: "Epic Saga",
           rarity: "Rare",
-          ep: 1500,
+          ep: 1523,
           color: "#3b82f6",
           description: "An epic tale worthy of Homer himself.",
           words: ["epic", "epics", "legendary", "saga", "mythic"],
@@ -755,7 +895,7 @@
           id: "exclamation",
           name: "Loud & Clear",
           rarity: "Common",
-          ep: 200,
+          ep: 234,
           color: "#9ca3af",
           description: "This joke doesn't whisper - it shouts!",
           words: ["loud", "louder", "loudest", "shout", "yell"],
@@ -765,7 +905,7 @@
           id: "question",
           name: "Curious Mind",
           rarity: "Common",
-          ep: 200,
+          ep: 189,
           color: "#9ca3af",
           description:
             "A joke that leaves you wondering and questioning everything.",
@@ -776,7 +916,7 @@
           id: "comma_heavy",
           name: "Pause Master",
           rarity: "Uncommon",
-          ep: 500,
+          ep: 567,
           color: "#22c55e",
           description: "So many pauses, it's practically a meditation.",
           words: ["pause", "pauses", "pausing", "break", "rest"],
@@ -786,7 +926,7 @@
           id: "no_punctuation",
           name: "Raw Format",
           rarity: "Rare",
-          ep: 1200,
+          ep: 1234,
           color: "#3b82f6",
           description: "No periods, no questions, just pure unfiltered comedy.",
           words: ["raw", "rawer", "rawest", "pure", "untouched"],
@@ -796,7 +936,7 @@
           id: "few_words",
           name: "Minimalist",
           rarity: "Common",
-          ep: 350,
+          ep: 378,
           color: "#9ca3af",
           description: "Less is more when every word counts.",
           words: ["minimal", "minimalist", "sparse", "few", "little"],
@@ -806,7 +946,7 @@
           id: "many_words",
           name: "Wordy",
           rarity: "Uncommon",
-          ep: 550,
+          ep: 591,
           color: "#22c55e",
           description: "A verbose masterpiece that never runs out of words.",
           words: ["wordy", "verbose", "lengthy", "many", "plenty"],
@@ -816,7 +956,7 @@
           id: "yo_mama_x2",
           name: "Double Trouble",
           rarity: "Epic",
-          ep: 8000,
+          ep: 8234,
           color: "#a855f7",
           description:
             'Two "Yo Mama" references in one joke? That\'s twice the fun!',
@@ -828,7 +968,7 @@
           id: "yo_mama_x3",
           name: "Triple Threat",
           rarity: "Mythic",
-          ep: 25000,
+          ep: 25678,
           color: "#fbbf24",
           description:
             'Three "Yo Mama" references - the holy trinity of roasts.',
@@ -840,7 +980,7 @@
           id: "food_mention",
           name: "Foodie",
           rarity: "Uncommon",
-          ep: 500,
+          ep: 523,
           color: "#22c55e",
           description: "When food becomes the punchline itself.",
           words: ["food", "foods", "eating", "meal", "feast"],
@@ -853,7 +993,7 @@
           id: "fast_food",
           name: "Fast Food Fan",
           rarity: "Uncommon",
-          ep: 600,
+          ep: 634,
           color: "#22c55e",
           description: "A love letter to drive-thrus and greasy goodness.",
           words: ["fast", "faster", "fastest", "quick", "speedy"],
@@ -864,7 +1004,7 @@
           id: "tech_mention",
           name: "Tech Savvy",
           rarity: "Rare",
-          ep: 1500,
+          ep: 1567,
           color: "#3b82f6",
           description: "When modern technology meets ancient comedy.",
           words: ["tech", "techy", "digital", "cyber", "online"],
@@ -877,7 +1017,7 @@
           id: "social_media",
           name: "Social Butterfly",
           rarity: "Uncommon",
-          ep: 650,
+          ep: 678,
           color: "#22c55e",
           description: "Scrolling through the social feeds of comedy.",
           words: ["social", "socially", "connected", "linked", "networked"],
@@ -888,7 +1028,7 @@
           id: "money_mention",
           name: "Money Talks",
           rarity: "Uncommon",
-          ep: 600,
+          ep: 612,
           color: "#22c55e",
           description: "When the punchline is all about the benjamins.",
           words: ["money", "moneys", "cash", "funds", "wealth"],
@@ -899,7 +1039,7 @@
           id: "stock_market",
           name: "Wall Street",
           rarity: "Rare",
-          ep: 1800,
+          ep: 1834,
           color: "#3b82f6",
           description: "When jokes cause market fluctuations.",
           words: ["stock", "stocks", "trading", "market", "invest"],
@@ -909,7 +1049,7 @@
           id: "animal_mention",
           name: "Animal Lover",
           rarity: "Uncommon",
-          ep: 550,
+          ep: 556,
           color: "#22c55e",
           description: "When the animal kingdom gets roasted.",
           words: ["animal", "animals", "beast", "creature", "wild"],
@@ -920,7 +1060,7 @@
           id: "sea_creature",
           name: "Deep Sea",
           rarity: "Rare",
-          ep: 1400,
+          ep: 1423,
           color: "#3b82f6",
           description: "Diving deep into oceanic comedy.",
           words: ["sea", "seas", "ocean", "deep", "marine"],
@@ -930,7 +1070,7 @@
           id: "house_mention",
           name: "Homebody",
           rarity: "Common",
-          ep: 400,
+          ep: 423,
           color: "#9ca3af",
           description: "When home sweet home becomes the punchline.",
           words: ["home", "homes", "house", "household", "dwelling"],
@@ -940,7 +1080,7 @@
           id: "outdoor_mention",
           name: "Nature Lover",
           rarity: "Uncommon",
-          ep: 550,
+          ep: 589,
           color: "#22c55e",
           description: "Taking comedy outdoors into the great unknown.",
           words: ["nature", "natural", "outdoor", "outside", "wild"],
@@ -951,7 +1091,7 @@
           id: "city_mention",
           name: "City Slicker",
           rarity: "Uncommon",
-          ep: 600,
+          ep: 634,
           color: "#22c55e",
           description: "Urban legends and metropolitan mishaps.",
           words: ["city", "cities", "urban", "town", "metro"],
@@ -962,7 +1102,7 @@
           id: "time_mention",
           name: "Time Keeper",
           rarity: "Uncommon",
-          ep: 600,
+          ep: 612,
           color: "#22c55e",
           description: "When time itself becomes the joke.",
           words: ["time", "times", "clock", "hour", "minute"],
@@ -975,7 +1115,7 @@
           id: "past_mention",
           name: "History Buff",
           rarity: "Rare",
-          ep: 1300,
+          ep: 1345,
           color: "#3b82f6",
           description: "Digging up jokes from the annals of history.",
           words: ["past", "history", "historic", "ancient", "old"],
@@ -986,7 +1126,7 @@
           id: "future_mention",
           name: "Future Thinker",
           rarity: "Rare",
-          ep: 1300,
+          ep: 1367,
           color: "#3b82f6",
           description: "Jokes from tomorrow, delivered today.",
           words: ["future", "futuristic", "tomorrow", "ahead", "next"],
@@ -996,7 +1136,7 @@
           id: "color_mention",
           name: "Colorful",
           rarity: "Common",
-          ep: 350,
+          ep: 389,
           color: "#9ca3af",
           description: "A joke painted in vivid hues.",
           words: ["color", "colors", "colorful", "hue", "shade"],
@@ -1009,7 +1149,7 @@
           id: "dark_color",
           name: "Dark Side",
           rarity: "Uncommon",
-          ep: 500,
+          ep: 534,
           color: "#22c55e",
           description: "When the joke ventures into the shadows.",
           words: ["dark", "darker", "darkest", "shadow", "black"],
@@ -1019,7 +1159,7 @@
           id: "bright_color",
           name: "Bright Side",
           rarity: "Uncommon",
-          ep: 500,
+          ep: 512,
           color: "#22c55e",
           description: "A joke that shines like the sun.",
           words: ["bright", "brighter", "brightest", "light", "shine"],
@@ -1029,7 +1169,7 @@
           id: "sad_mention",
           name: "Tearjerker",
           rarity: "Uncommon",
-          ep: 550,
+          ep: 567,
           color: "#22c55e",
           description: "So funny it makes you cry... or maybe just sad.",
           words: ["sad", "sadder", "saddest", "cry", "tears"],
@@ -1039,7 +1179,7 @@
           id: "happy_mention",
           name: "Joy Bringer",
           rarity: "Uncommon",
-          ep: 550,
+          ep: 589,
           color: "#22c55e",
           description: "A joke that spreads happiness wherever it goes.",
           words: ["happy", "happier", "happiest", "joy", "smile"],
@@ -1049,7 +1189,7 @@
           id: "angry_mention",
           name: "Hot Head",
           rarity: "Uncommon",
-          ep: 550,
+          ep: 578,
           color: "#22c55e",
           description: "A joke that might make someone's blood boil.",
           words: ["angry", "angrier", "angriest", "mad", "rage"],
@@ -1059,7 +1199,7 @@
           id: "movement_mention",
           name: "On The Move",
           rarity: "Uncommon",
-          ep: 600,
+          ep: 623,
           color: "#22c55e",
           description: "When the joke is all about action and movement.",
           words: ["move", "moves", "moving", "walk", "run"],
@@ -1069,7 +1209,7 @@
           id: "action_verb",
           name: "Action Hero",
           rarity: "Rare",
-          ep: 1400,
+          ep: 1456,
           color: "#3b82f6",
           description: "A joke packed with dynamic verbs and motion.",
           words: ["action", "actions", "acting", "do", "did"],
@@ -1079,7 +1219,7 @@
           id: "big_mention",
           name: "Big Deal",
           rarity: "Common",
-          ep: 400,
+          ep: 412,
           color: "#9ca3af",
           description: "When size matters in comedy.",
           words: ["big", "bigger", "biggest", "large", "huge"],
@@ -1089,7 +1229,7 @@
           id: "small_mention",
           name: "Small Fry",
           rarity: "Common",
-          ep: 400,
+          ep: 398,
           color: "#9ca3af",
           description: "Tiny jokes for tiny moments.",
           words: ["small", "smaller", "smallest", "tiny", "little"],
@@ -1099,7 +1239,7 @@
           id: "fast_mention",
           name: "Speed Demon",
           rarity: "Uncommon",
-          ep: 600,
+          ep: 634,
           color: "#22c55e",
           description: "A joke that moves at lightning speed.",
           words: ["fast", "faster", "fastest", "quick", "speedy"],
@@ -1109,7 +1249,7 @@
           id: "slow_mention",
           name: "Slow & Steady",
           rarity: "Uncommon",
-          ep: 600,
+          ep: 612,
           color: "#22c55e",
           description: "A joke that takes its sweet time.",
           words: ["slow", "slower", "slowest", "gradual", "steady"],
@@ -1119,7 +1259,7 @@
           id: "weather_mention",
           name: "Weather Watcher",
           rarity: "Uncommon",
-          ep: 550,
+          ep: 567,
           color: "#22c55e",
           description: "When the weather forecast includes punchlines.",
           words: ["weather", "weathers", "climate", "forecast", "sky"],
@@ -1129,7 +1269,7 @@
           id: "rain_mention",
           name: "Rainy Day",
           rarity: "Common",
-          ep: 450,
+          ep: 456,
           color: "#9ca3af",
           description: "A joke perfect for gloomy weather.",
           words: ["rain", "rains", "raining", "rainy", "wet"],
@@ -1139,7 +1279,7 @@
           id: "family_mention",
           name: "Family First",
           rarity: "Common",
-          ep: 400,
+          ep: 423,
           color: "#9ca3af",
           description: "When family ties become the comedy foundation.",
           words: ["family", "families", "kin", "relative", "relation"],
@@ -1150,7 +1290,7 @@
           id: "friend_mention",
           name: "Friend Zone",
           rarity: "Common",
-          ep: 400,
+          ep: 412,
           color: "#9ca3af",
           description: "When friendship meets comedic roasting.",
           words: ["friend", "friends", "friendly", "buddy", "pal"],
@@ -1160,7 +1300,7 @@
           id: "music_mention",
           name: "Music Lover",
           rarity: "Uncommon",
-          ep: 600,
+          ep: 623,
           color: "#22c55e",
           description: "A joke that hits all the right notes.",
           words: ["music", "musical", "song", "tune", "melody"],
@@ -1170,7 +1310,7 @@
           id: "artist_mention",
           name: "Star Struck",
           rarity: "Rare",
-          ep: 1500,
+          ep: 1534,
           color: "#3b82f6",
           description: "When celebrities become the butt of the joke.",
           words: ["star", "stars", "celebrity", "famous", "icon"],
@@ -1181,7 +1321,7 @@
           id: "sports_mention",
           name: "Sports Fan",
           rarity: "Uncommon",
-          ep: 600,
+          ep: 645,
           color: "#22c55e",
           description: "A joke that scores in the comedy league.",
           words: ["sport", "sports", "game", "play", "team"],
@@ -1192,7 +1332,7 @@
           id: "nba_mention",
           name: "Court Vision",
           rarity: "Rare",
-          ep: 1400,
+          ep: 1423,
           color: "#3b82f6",
           description: "When basketball meets comedic brilliance.",
           words: ["court", "courts", "basketball", "hoop", "ball"],
@@ -1202,7 +1342,7 @@
           id: "school_mention",
           name: "Book Smart",
           rarity: "Uncommon",
-          ep: 600,
+          ep: 634,
           color: "#22c55e",
           description: "Educational comedy for the intellectually curious.",
           words: ["school", "schools", "study", "learn", "education"],
@@ -1213,7 +1353,7 @@
           id: "college_mention",
           name: "Higher Education",
           rarity: "Rare",
-          ep: 1300,
+          ep: 1345,
           color: "#3b82f6",
           description: "When higher education meets lower comedy.",
           words: ["college", "colleges", "university", "degree", "campus"],
@@ -1224,7 +1364,7 @@
           id: "work_mention",
           name: "Work Ethic",
           rarity: "Uncommon",
-          ep: 600,
+          ep: 612,
           color: "#22c55e",
           description: "A joke about the 9-to-5 grind.",
           words: ["work", "works", "working", "job", "career"],
@@ -1234,7 +1374,7 @@
           id: "unemployed",
           name: "Between Jobs",
           rarity: "Rare",
-          ep: 1200,
+          ep: 1234,
           color: "#3b82f6",
           description: "When unemployment becomes the punchline.",
           words: ["unemployed", "jobless", "idle", "free", "available"],
@@ -1244,7 +1384,7 @@
           id: "car_mention",
           name: "Road Tripper",
           rarity: "Uncommon",
-          ep: 600,
+          ep: 623,
           color: "#22c55e",
           description: "A joke that takes you on a comedic road trip.",
           words: ["car", "cars", "drive", "vehicle", "auto"],
@@ -1254,7 +1394,7 @@
           id: "public_transport",
           name: "Public Transit",
           rarity: "Rare",
-          ep: 1300,
+          ep: 1367,
           color: "#3b82f6",
           description: "When public transportation becomes public comedy.",
           words: ["transit", "transit", "public", "bus", "train"],
@@ -1264,7 +1404,7 @@
           id: "clothing_mention",
           name: "Fashion Forward",
           rarity: "Uncommon",
-          ep: 550,
+          ep: 578,
           color: "#22c55e",
           description: "A joke dressed to impress.",
           words: ["clothes", "clothing", "fashion", "wear", "outfit"],
@@ -1275,7 +1415,7 @@
           id: "ugly_clothes",
           name: "Fashion Disaster",
           rarity: "Rare",
-          ep: 1400,
+          ep: 1456,
           color: "#3b82f6",
           description: "When fashion choices become comedic gold.",
           words: ["fashion", "fashionable", "style", "trend", "look"],
@@ -1285,7 +1425,7 @@
           id: "smart_mention",
           name: "Bright Mind",
           rarity: "Uncommon",
-          ep: 600,
+          ep: 634,
           color: "#22c55e",
           description: "A joke that celebrates intelligence.",
           words: ["smart", "smarter", "smartest", "intelligent", "clever"],
@@ -1295,7 +1435,7 @@
           id: "dumb_mention",
           name: "Not The Sharpest",
           rarity: "Rare",
-          ep: 1500,
+          ep: 1567,
           color: "#3b82f6",
           description: "When dullness becomes the comedy weapon.",
           words: ["dumb", "dumber", "dumbest", "stupid", "foolish"],
@@ -1305,7 +1445,7 @@
           id: "old_mention",
           name: "Old Soul",
           rarity: "Uncommon",
-          ep: 550,
+          ep: 589,
           color: "#22c55e",
           description: "A joke with ancient comedic wisdom.",
           words: ["old", "older", "oldest", "ancient", "elderly"],
@@ -1315,7 +1455,7 @@
           id: "young_mention",
           name: "Young Blood",
           rarity: "Uncommon",
-          ep: 550,
+          ep: 567,
           color: "#22c55e",
           description: "Fresh comedy for the young at heart.",
           words: ["young", "younger", "youngest", "youth", "fresh"],
@@ -1325,7 +1465,7 @@
           id: "alliteration",
           name: "Alliteration Ace",
           rarity: "Epic",
-          ep: 7000,
+          ep: 7234,
           color: "#a855f7",
           description:
             "When words starting with the same sound create comedic magic.",
@@ -1342,7 +1482,7 @@
           id: "rhyme",
           name: "Rhyme Time",
           rarity: "Epic",
-          ep: 8000,
+          ep: 8345,
           color: "#a855f7",
           description: "When the joke rhymes, it's prime time.",
           words: ["rhyme", "rhymes", "rhyming", "poetic", "verse"],
@@ -1352,7 +1492,7 @@
           id: "palindrome_word",
           name: "Palindrome Pro",
           rarity: "Legendary",
-          ep: 50000,
+          ep: 50234,
           color: "#ef4444",
           description:
             "When words read the same forwards and backwards, comedy flows both ways.",
@@ -1369,7 +1509,7 @@
           id: "daily_viewer",
           name: "Daily Viewer",
           rarity: "Common",
-          ep: 100,
+          ep: 123,
           color: "#9ca3af",
           description: "You showed up today. That's worth celebrating.",
           words: ["daily", "dailies", "day", "today", "routine"],
@@ -1379,7 +1519,7 @@
           id: "perfect_day",
           name: "Perfect Day",
           rarity: "Mythic",
-          ep: 30000,
+          ep: 30456,
           color: "#fbbf24",
           description:
             "When everything aligns and the joke is absolutely perfect.",
@@ -1390,7 +1530,7 @@
           id: "badge_collector",
           name: "Badge Collector",
           rarity: "Epic",
-          ep: 10000,
+          ep: 10234,
           color: "#a855f7",
           description: "Collecting badges like Pokémon.",
           words: ["collect", "collects", "collecting", "gather", "accumulate"],
@@ -1400,7 +1540,7 @@
           id: "ep_master",
           name: "EP Master",
           rarity: "Legendary",
-          ep: 100000,
+          ep: 100234,
           color: "#ef4444",
           description: "When your EP count reaches legendary status.",
           words: ["master", "masters", "mastering", "expert", "pro"],
@@ -1436,64 +1576,46 @@
         badgeGrid.appendChild(el);
       });
 
-      // --- 4. Poem Builder System (Words Only) ---
+      // --- 4. Poem Builder System (Button-based) ---
       const wordGrid = document.getElementById("wordGrid");
       const poemPreview = document.getElementById("poemPreview");
+      let poemWords = [];
 
       unlockedBadges.forEach((badge) => {
-        const select = document.createElement("select");
-        select.className = "word-select";
-        select.dataset.badgeId = badge.id;
+        const btn = document.createElement("button");
+        btn.className = "word-btn";
+        btn.style.borderColor = badge.color + "40";
+        btn.style.color = badge.color;
+        btn.textContent = badge.words[0];
+        btn.dataset.words = JSON.stringify(badge.words);
+        btn.dataset.currentIndex = "0";
 
-        badge.words.forEach((word, wordIndex) => {
-          const option = document.createElement("option");
-          option.value = word;
-          option.textContent = word;
-          if (wordIndex === 0) option.selected = true;
-          select.appendChild(option);
+        btn.addEventListener("click", () => {
+          // Cycle through word forms
+          const words = JSON.parse(btn.dataset.words);
+          let currentIndex = parseInt(btn.dataset.currentIndex);
+          currentIndex = (currentIndex + 1) % words.length;
+          btn.dataset.currentIndex = currentIndex;
+          btn.textContent = words[currentIndex];
+
+          // Add to poem
+          poemWords.push(words[currentIndex]);
+          updatePoemPreview();
+
+          // Button animation
+          btn.style.transform = "scale(0.95)";
+          setTimeout(() => (btn.style.transform = ""), 100);
         });
 
-        select.addEventListener("change", updatePoemPreview);
-        wordGrid.appendChild(select);
+        wordGrid.appendChild(btn);
       });
 
       function updatePoemPreview() {
-        const selects = document.querySelectorAll(".word-select");
-        const words = Array.from(selects).map((s) => s.value);
-
-        if (words.length === 0) {
-          poemPreview.textContent = "No badges unlocked yet...";
+        if (poemWords.length === 0) {
+          poemPreview.textContent = "Click buttons to build your poem...";
           return;
         }
-
-        const lines = [];
-        let wordIndex = 0;
-
-        if (words.length >= 3) {
-          lines.push(`${words[0]} ${words[1]} ${words[2]}`);
-          wordIndex = 3;
-        }
-
-        if (words.length >= wordIndex + 3) {
-          lines.push(
-            `${words[wordIndex]} ${words[wordIndex + 1]} ${words[wordIndex + 2]}`
-          );
-          wordIndex += 3;
-        }
-
-        if (words.length >= wordIndex + 3) {
-          lines.push(
-            `${words[wordIndex]} ${words[wordIndex + 1]} ${words[wordIndex + 2]}`
-          );
-          wordIndex += 3;
-        }
-
-        if (words.length > wordIndex) {
-          const remaining = words.slice(wordIndex);
-          lines.push(remaining.join(" "));
-        }
-
-        poemPreview.textContent = lines.join("\n");
+        poemPreview.textContent = poemWords.join(" ");
       }
 
       updatePoemPreview();
@@ -1618,6 +1740,43 @@ ${poemText}`;
 
       setInterval(updateCountdown, 1000);
       updateCountdown();
+
+      // --- 8. Roll New Video Function ---
+      function rollNewVideo() {
+        const rollBtn = document.querySelector(".roll-btn");
+        rollBtn.classList.add("rolling");
+
+        // Reset poem
+        poemWords = [];
+        updatePoemPreview();
+
+        // Clear badges
+        const badgeGrid = document.getElementById("badgeGrid");
+        badgeGrid.innerHTML = "";
+
+        // Clear word buttons
+        const wordGrid = document.getElementById("wordGrid");
+        wordGrid.innerHTML = "";
+
+        // Generate new random seed
+        const newSeed = Math.random();
+        localStorage.setItem("yomamadoodle_user_seed", newSeed);
+
+        // Reload video with animation
+        setTimeout(() => {
+          loadDailyVideo();
+          rollBtn.classList.remove("rolling");
+
+          // Add animation classes
+          badgeGrid.classList.add("rolling");
+          document.querySelector(".ep-display").classList.add("rolling");
+
+          setTimeout(() => {
+            badgeGrid.classList.remove("rolling");
+            document.querySelector(".ep-display").classList.remove("rolling");
+          }, 1000);
+        }, 600);
+      }
     </script>
   </body>
 </html>
